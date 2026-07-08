@@ -94,6 +94,14 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
 .small{font-size:12px}
+.info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
+  background:#eef0f6;color:var(--muted);font-size:11px;font-weight:700;cursor:help;position:relative;margin-left:6px;vertical-align:middle;font-family:var(--body);text-transform:none;letter-spacing:0}
+.info::after{content:attr(data-info);position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#fff;font-size:12px;font-weight:400;line-height:1.4;padding:10px 12px;border-radius:8px;
+  width:260px;z-index:40;opacity:0;pointer-events:none;transition:.15s;text-align:left;white-space:normal;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.info:hover::after{opacity:1}
+.srclogo-wrap img{width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:6px}
+.task-ico img{width:22px;height:22px;border-radius:5px}
 .right{text-align:right}
 .mt{margin-top:18px}
 .hidden{display:none!important}
@@ -197,31 +205,36 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   </div>
     <div class="grid g4">
       <div class="card kpi hero">
-        <div class="eyebrow">Ø The Base</div>
-        <div class="val" id="kBase">–</div>
-        <div class="small" id="kBaseSub" style="color:var(--mint)"></div>
+        <div class="eyebrow">Einstiegs-Index<span class="info" data-info="Vergleicht euren günstigsten Preis mit dem günstigsten Preis je Wettbewerber (Median über alle Anbieter), bereinigt um Lage und Größe. 100 = gleich teuer wie der Markt-Einstieg. 108 = euer Einstieg ist 8 % teurer. Das ist die Zahl, die der Kunde beim Vergleichen 'fühlt'.">i</span></div>
+        <div class="val" id="kIndex">–</div>
+        <div class="small" id="kIndexSub" style="color:var(--mint)"></div>
       </div>
       <div class="card kpi">
-        <div class="eyebrow">Ø Wettbewerb</div>
+        <div class="eyebrow">Median The Base<span class="info" data-info="Mittlerer Preis über eure Kategorien im gewählten Filter (Median = die Hälfte liegt drüber, die Hälfte drunter — robuster als Durchschnitt gegen Ausreißer).">i</span></div>
+        <div class="val" id="kBase">–</div>
+        <div class="small" id="kBaseSub"></div>
+      </div>
+      <div class="card kpi">
+        <div class="eyebrow">Median Markt<span class="info" data-info="Anbietergewichtet: erst je Wettbewerber ein Wert (Median seiner Punkte), dann Median über alle Anbieter. So zählt ein Anbieter mit 5 erfassten Kategorien nicht 5x so viel wie einer mit einem Preis.">i</span></div>
         <div class="val" id="kComp">–</div>
         <div class="small" id="kCompSub"></div>
       </div>
       <div class="card kpi">
-        <div class="eyebrow">Delta Base vs. Markt</div>
+        <div class="eyebrow">Delta Base vs. Markt<span class="info" data-info="Median The Base minus Median Markt, in Euro und Prozent. Positiv = ihr seid teurer. Achtung: unbereinigt — für den fairen Vergleich auf 'Lagebereinigt' umschalten oder auf den Einstiegs-Index schauen.">i</span></div>
         <div class="val" id="kDelta">–</div>
         <div class="small"><span id="kDeltaPill" class="pill flat">–</span></div>
       </div>
-      <div class="card kpi">
-        <div class="eyebrow">Marktindex The Base</div>
-        <div class="val" id="kIndex">–</div>
-        <div class="small" id="kIndexSub">100 = fair zum Markt (Lage & Größe bereinigt)</div>
-      </div>
     </div>
     <div id="alertBanner"></div>
+    <div class="card mt">
+      <h3>The Base je Kategorie vs. Markt<span class="info" data-info="Drilldown: jede eurer Kategorien gegen ihren Lage-fairen Preis (Marktbasis × Lage × Größe). Zeigt, welches Produkt euer Premium trägt und wo ihr unter Markt liegt.">i</span></h3>
+      <table><thead><tr><th>Kategorie</th><th class="right">Preis</th><th class="right">Fair-Preis</th><th class="right">Δ fair</th></tr></thead>
+      <tbody id="catTable"></tbody></table>
+    </div>
 
     <div class="grid g2 mt">
       <div class="card">
-        <h3>Positionierung im Markt</h3>
+        <h3>Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand.">i</span></h3>
         <div class="chartbox"><canvas id="barChart"></canvas></div>
         <div class="legend">
           <span><span class="sw" style="background:var(--navy)"></span>The Base</span>
@@ -229,27 +242,27 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </div>
       <div class="card">
-        <h3>Kennzahlen (Wettbewerb)</h3>
+        <h3>Kennzahlen (Wettbewerb)<span class="info" data-info="Statistik über die aktuellen Wettbewerbspreise im Filter. Die Marktbasis ist der lagebereinigte Referenzpreis, aus dem die Fair-Preise berechnet werden.">i</span></h3>
         <table><tbody id="statTable"></tbody></table>
         <div class="note mt" id="normNote"></div>
       </div>
     </div>
 
     <div class="card mt">
-      <h3>Preis vs. Lage — wer ist teurer, als seine Lage rechtfertigt?</h3>
+      <h3>Preis vs. Lage<span class="info" data-info="Jeder Punkt = ein Angebot. Rechts = bessere Lage, oben = teurer. Die Mint-Linie ist der Lage-faire Preis: Punkte darüber sind teurer, als ihre Lage rechtfertigt — darunter günstiger.">i</span></h3>
       <div class="chartbox"><canvas id="scatterChart"></canvas></div>
       <div class="note mt">Jeder Punkt = ein aktuelles Angebot. Linie = Lage-fairer Preis (Marktbasis × Lagefaktor, Referenzgröße). Über der Linie: teurer als die Lage rechtfertigt. Δ im Tooltip.</div>
       <div class="legend"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span><span><span class="sw" style="background:var(--mint)"></span>Fair-Preis-Linie</span></div>
     </div>
 
     <div class="card mt">
-      <h3>Preisentwicklung (Zeitreihe)</h3>
+      <h3>Preisentwicklung (Zeitreihe)<span class="info" data-info="Median je Erfassungsdatum. Zeigt, wie sich The Base und der Markt über die Zeit bewegen — jede Scrape- oder Pflegerunde erzeugt neue Datenpunkte.">i</span></h3>
       <div class="chartbox"><canvas id="lineChart"></canvas></div>
       <div class="note mt">Ø je Erfassungsdatum · The Base vs. Wettbewerb · aktuelle Filter.</div>
     </div>
 
     <div class="card mt">
-      <h3>Detailtabelle</h3>
+      <h3>Detailtabelle<span class="info" data-info="Alle aktuellen Preispunkte im Filter. Δ fair = Abweichung vom Lage-fairen Preis. 🟢 AUTO = per Scraping gefunden, 🟠 MANUELL = von Hand erfasst. Quelle-Link führt zum Original.">i</span></h3>
       <div style="overflow:auto;max-height:460px">
         <table>
           <thead><tr>
@@ -593,9 +606,25 @@ function latest(points){
     if(!map[k]||p.date>map[k].date) map[k]=p;});
   return Object.values(map);
 }
+// Anbietergewichtet: erst je Anbieter Median, dann Median über Anbieter
+function perCompanyMedian(points,valueFn){
+  const by={};
+  points.forEach(p=>{(by[p.company]=by[p.company]||[]).push(valueFn(p));});
+  return median(Object.values(by).map(median));
+}
 function marketBasis(){
-  const comp=latest(filtered('competitor'));
-  return median(comp.map(normPrice));
+  return perCompanyMedian(latest(filtered('competitor')),normPrice);
+}
+// Einstiegs-Index: günstigster Base-Preis vs. Median der günstigsten je Anbieter (lagebereinigt)
+function entryIndex(){
+  const base=latest(filtered('base')), comp=latest(filtered('competitor'));
+  if(!base.length||!comp.length) return null;
+  const baseEntry=Math.min(...base.map(normPrice));
+  const by={};
+  comp.forEach(p=>{const v=normPrice(p); if(!(p.company in by)||v<by[p.company]) by[p.company]=v;});
+  const marketEntry=median(Object.values(by));
+  if(!marketEntry) return null;
+  return {idx:Math.round(baseEntry/marketEntry*100), baseEntry, marketEntry, n:Object.keys(by).length};
 }
 function fairPrice(p,basis){ if(basis==null)return null; return basis*sizeFactor(p)*lageOf(p); }
 function deltaFair(p,basis){ const f=fairPrice(p,basis); return f? (p.price/f-1) : null; }
@@ -627,7 +656,9 @@ function scrapeStatus(){
 function buildTasks(){
   const tasks=[];
   const sc=scrapeStatus();
-  if(sc.due) tasks.push({kind:'scrape',key:'scrape',title:'Automatisches Scraping durchführen',sub:sc.reason});
+  tasks.push({kind:'scrape',key:'scrape',due:sc.due,
+    title:'Automatisches Scraping'+(sc.due?' durchführen':''),
+    sub: sc.due? sc.reason : 'Letzter Lauf vor '+sc.days+' Tag(en) — aktuell kein neuer Lauf nötig, aber jederzeit möglich'});
   STATE.registry.forEach(r=>{
     const pts=pointsFor(r.company,r.city);
     const resting = r.checkedAt && daysSince(r.checkedAt)<=STATE.settings.freshDays;
@@ -675,29 +706,30 @@ let sessionDone=0, sessionTotal=null;
 
 function renderTasks(){
   const tasks=buildTasks();
-  document.getElementById('taskCount').textContent=tasks.length;
+  const todoCount=tasks.filter(t=>t.kind!=='scrape'||t.due).length;
+  document.getElementById('taskCount').textContent=todoCount;
   if(sessionTotal===null) sessionTotal=tasks.length;
   const done=Math.max(0,sessionTotal-tasks.length+0);
   const pct=sessionTotal>0? Math.round((sessionDone/(sessionDone+tasks.length))*100||0):100;
   document.getElementById('progBar').style.width=pct+'%';
-  document.getElementById('progTxt').textContent= sessionDone+' erledigt · '+tasks.length+' offen';
+  document.getElementById('progTxt').textContent= sessionDone+' erledigt · '+todoCount+' offen';
 
   const box=document.getElementById('taskList');
   if(!tasks.length){ box.innerHTML='<div class="card"><b>Alles erledigt.</b> <span class="note">Keine offenen Aufgaben — die Steuerung meldet sich, sobald etwas fällig wird.</span></div>'; return; }
 
-  const scrapeDue=tasks.some(t=>t.kind==='scrape');
+  const scrapeDue=tasks.some(t=>t.kind==='scrape'&&t.due);
   box.innerHTML=tasks.map((t,i)=>{
     const ico=t.kind==='scrape'?'🤖':t.kind==='review'?'🔍':t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
     const icoCls=t.kind==='scrape'?'new':t.kind==='review'?'gap':t.kind;
-    const badge=t.kind==='scrape'? '<span class="tag auto">SCHRITT 1</span>' :
+    const badge=t.kind==='scrape'? (t.due?'<span class="tag auto">SCHRITT 1</span>':'<span class="tag auto">AKTUELL ✓</span>') :
                 t.kind==='review'? '<span class="status bad">REVIEW</span>' :
                 t.kind==='upd'? `<span class="status ${t.statusCls}">${t.statusCls==='bad'?'überfällig':'fällig'}</span>` :
                 t.kind==='new'? '<span class="tag comp">NEU</span>':'<span class="tag manual">LÜCKE</span>';
     const open=openTask===t.key;
-    const sep=(scrapeDue && i===1)? '<div class="eyebrow" style="margin:18px 0 10px">Schritt 2 · Manuelle Pflege — reduziert sich nach dem Scraping automatisch</div>':'';
+    const sep=(i===1)? '<div class="eyebrow" style="margin:18px 0 10px">'+(scrapeDue?'Schritt 2 · Manuelle Pflege — reduziert sich nach dem Scraping automatisch':'Manuelle Pflege')+'</div>':'';
     return sep+`<div class="task" data-key="${t.key}">
       <div class="task-head" data-toggle="${t.key}">
-        <div class="task-ico ${icoCls}">${ico}</div>
+        <div class="task-ico ${icoCls}">${(t.kind==='new'||t.kind==='upd')&&t.reg?logoImg(t.reg.url,ico):ico}</div>
         <div><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div>
         <div class="task-right">${badge}<span class="rowbtn">${open?'▲':'▼'}</span></div>
       </div>
@@ -716,11 +748,17 @@ function renderTasks(){
   bindTaskForms(tasks);
 }
 
+function logoImg(url,fallback){
+  if(!url) return fallback;
+  try{ const d=new URL(url).hostname.replace('www.','');
+    return `<img src="https://icons.duckduckgo.com/ip3/${d}.ico" onerror="this.outerHTML='${fallback}'" alt="">`;
+  }catch(e){ return fallback; }
+}
 function taskBody(t){
   if(t.kind==='scrape'){
     const total=STATE.registry.length;
     return `<div class="task-body">
-      <div class="note">Prüft alle <b>${total} registrierten Quellen</b> per KI-Websuche auf aktuelle Monatspreise und trägt Treffer automatisch ein (Badge 🟢 AUTO). Dauer: ca. ${Math.ceil(total/2)*0.5|0}–${Math.ceil(total*0.7)} Minuten — Tab offen lassen. Quellen ohne öffentliche Preise bleiben danach als manuelle Aufgabe stehen.</div>
+      <div class="note">Prüft alle <b>${total} registrierten Quellen</b> — zuerst die Anbieter-Website direkt, dann Inserate als Fallback — und trägt Treffer automatisch ein (Badge 🟢 AUTO). Dauer: ca. ${Math.ceil(total/2)*0.5|0}–${Math.ceil(total*0.7)} Minuten — Tab offen lassen. Quellen ohne öffentliche Preise bleiben als manuelle Aufgabe stehen.${STATE.meta&&STATE.meta.lastScrapeAt?'<br><b>Letzter Lauf:</b> '+fmtTs(STATE.meta.lastScrapeAt):'<br><b>Noch nie gelaufen.</b>'}</div>
       <div class="mt" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn primary" id="scrapeBtn">Jetzt scrapen</button>
         <span class="small" id="scrapeStat"></span>
@@ -905,31 +943,41 @@ function renderDash(){
   const baseVals=base.map(valOf);
   const compVals=comp.map(valOf);
   const compMaxVals=comp.map(p=> F.mode==='norm'? normPrice({...p,price:(p.priceMax||p.price)}) : (p.priceMax||p.price));
-  const bAvg=avg(baseVals), cAvg=avg(compVals);
-  document.getElementById('kBase').innerHTML= bAvg?eur(bAvg):'–';
+  const bMed=median(baseVals), cMed=perCompanyMedian(comp,valOf);
+  document.getElementById('kBase').innerHTML= bMed?eur(bMed):'–';
   document.getElementById('kBaseSub').textContent= base.length? base.length+' Kategorien' : 'keine Daten';
-  document.getElementById('kComp').innerHTML= cAvg?eur(cAvg):'–';
-  document.getElementById('kCompSub').textContent= comp.length? new Set(comp.map(c=>c.company)).size+' Anbieter' : 'keine Daten';
+  document.getElementById('kComp').innerHTML= cMed?eur(cMed):'–';
+  document.getElementById('kCompSub').textContent= comp.length? new Set(comp.map(c=>c.company)).size+' Anbieter (gleichgewichtet)' : 'keine Daten';
   const dPill=document.getElementById('kDeltaPill');
-  if(bAvg&&cAvg){ const d=bAvg-cAvg, pct=d/cAvg*100;
+  if(bMed&&cMed){ const d=bMed-cMed, pct=d/cMed*100;
     document.getElementById('kDelta').textContent=(d>=0?'+':'')+eur(d);
     dPill.textContent=(pct>=0?'+':'')+pct.toFixed(0)+'% vs. Markt';
     dPill.className='pill '+(pct>2?'up':pct<-2?'down':'flat');
   } else { document.getElementById('kDelta').textContent='–'; dPill.textContent='–'; dPill.className='pill flat'; }
   const basis=marketBasis();
-  const idx=(bAvg&&basis)? Math.round(avg(base.map(normPrice))/basis*100) : null;
-  document.getElementById('kIndex').textContent = idx!=null? idx : '–';
-  document.getElementById('kIndexSub').innerHTML = idx==null? '100 = fair zum Markt (Lage & Größe bereinigt)' :
-    (idx>102? '<span class="pill up">+'+(idx-100)+' % über Lage-fairem Niveau</span>' :
-     idx<98?  '<span class="pill down">'+(idx-100)+' % unter Lage-fairem Niveau</span>' :
-              '<span class="pill flat">fair zum Markt</span>');
+  const ei=entryIndex();
+  document.getElementById('kIndex').textContent = ei? ei.idx : '–';
+  document.getElementById('kIndexSub').innerHTML = !ei? 'zu wenig Daten' :
+    'Euer Einstieg '+eur(ei.baseEntry)+' vs. Markt-Einstieg '+eur(ei.marketEntry)+' ('+ei.n+' Anbieter) · '+
+    (ei.idx>102? '<b>+'+(ei.idx-100)+' % teurer</b>' : ei.idx<98? '<b>'+(ei.idx-100)+' % günstiger</b>' : '<b>auf Marktniveau</b>');
+  renderCatTable(base,basis);
   const st=document.getElementById('statTable');
-  const rows=[['Min',compVals.length?Math.min(...compVals):null],['Ø',cAvg],['Median',median(compVals)],['Max',compMaxVals.length?Math.max(...compMaxVals):null],['Marktbasis (lagebereinigt)',basis]];
+  const rows=[['Min',compVals.length?Math.min(...compVals):null],['Median (alle Punkte)',median(compVals)],['Median (anbietergewichtet)',cMed],['Max',compMaxVals.length?Math.max(...compMaxVals):null],['Marktbasis (lagebereinigt)',basis]];
   st.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${eur(r[1])}</td></tr>`).join('');
   document.getElementById('normNote').textContent = F.mode==='norm'
     ? 'Normalisiert: bereinigt um Größe & Lage. Zeigt „echten" Preisunterschied pro vergleichbarer Einheit.'
     : 'Rohpreis: Marktrealität wie ausgeschrieben. Umschalten auf „Normalisiert" für den bereinigten Vergleich.';
   renderBar(base,comp); renderScatter(base,comp,basis); renderLine(); renderDetail([...base,...comp],basis);
+}
+
+function renderCatTable(base,basis){
+  const tb=document.getElementById('catTable'); if(!tb)return;
+  tb.innerHTML=base.slice().sort((a,b)=>a.price-b.price).map(p=>{
+    const f=fairPrice(p,basis), d=deltaFair(p,basis);
+    const dH=d==null?'–':`<span class="pill ${d>0.02?'up':d<-0.02?'down':'flat'}">${d>0?'+':''}${Math.round(d*100)} %</span>`;
+    return `<tr><td><b>${p.category}</b> <span class="small">(${p.location}${p.sqm?', '+p.sqm+' qm':''})</span></td>
+      <td class="num">${eur(p.price)}</td><td class="num">${f?eur(f):'–'}</td><td class="num">${dH}</td></tr>`;
+  }).join('')||'<tr><td colspan="4" class="note">Keine Base-Daten im Filter.</td></tr>';
 }
 
 function renderAlerts(){
@@ -966,13 +1014,18 @@ function renderScatter(base,comp,basis){
 }
 
 function renderBar(base,comp){
-  const labels=[], vals=[], colors=[];
-  base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.category);vals.push(Math.round(valOf(p)));colors.push('#14285f');});
-  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.company+(p.category!=='Range'?' · '+p.category:''));vals.push(Math.round(valOf(p)));colors.push('#f0786e');});
+  const labels=[], vals=[], colors=[], pts=[];
+  const push=(p,label,col)=>{labels.push(label);vals.push(Math.round(valOf(p)));colors.push(col);pts.push(p);};
+  base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,p.category,'#14285f'));
+  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,p.company+(p.category!=='Range'?' · '+p.category:''),'#f0786e'));
   const ctx=document.getElementById('barChart');
   if(barChart)barChart.destroy();
   barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>eur(c.raw)}}},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{
+      label:c=>eur(c.raw),
+      afterLabel:c=>{const p=pts[c.dataIndex]; if(!p)return '';
+        return '📍 '+p.location+(p.sqm?' · '+p.sqm+' qm':'')+'\nStand '+p.date+(p.method==='auto'?' · Auto':' · Manuell');}
+    }}},
       scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
 }
 
@@ -1054,7 +1107,7 @@ function renderControl(){
     if(pts.length===0){ st={c:'bad',t:'Ersterfassung offen'}; b++; }
     else { ld=lastDate(pts); st=statusOf(ld); st.c==='good'?g++:st.c==='due'?d++:b++; }
     const method=pts.some(p=>p.method==='auto')?'auto':'manual';
-    return `<tr><td><b>${r.company}</b></td><td>${r.city}</td><td class="small">${r.segment||''}</td>
+    return `<tr><td><span class="srclogo-wrap">${r.url?logoImg(r.url,''):''}</span><b>${r.company}</b></td><td>${r.city}</td><td class="small">${r.segment||''}</td>
       <td>${r.url?`<a href="${r.url}" target="_blank">öffnen</a>`:'–'}</td>
       <td>${pts.length?methodTag(method):'–'}</td>
       <td class="num">${pts.length}</td>
