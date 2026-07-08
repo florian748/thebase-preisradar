@@ -2,12 +2,14 @@
 // GET  (Cron 1.+15.): markiert Scraping als fällig -> Task erscheint im Frontend
 // POST {batch,restart}: verarbeitet N Quellen aus der Queue, schreibt Preispunkte (method:'auto')
 
-const KEY = 'preisradar:state';
+const KEY = 'preisradar:state:v1';
 
-export default async function handler(req, res) {
-  let kv;
-  try { ({ kv } = await import('@vercel/kv')); }
-  catch (e) { return res.status(501).json({ ok:false, error:'KV nicht konfiguriert' }); }
+module.exports = async function handler(req, res) {
+  let kv = null;
+  try {
+    if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) kv = require('@vercel/kv').kv;
+  } catch (e) { kv = null; }
+  if (!kv) return res.status(501).json({ ok:false, error:'KV nicht konfiguriert' });
 
   let state;
   try { state = await kv.get(KEY); }
@@ -90,7 +92,7 @@ export default async function handler(req, res) {
 
   await kv.set(KEY, state);
   return res.status(200).json({ ok:true, processed:todo.length, remaining, foundThisBatch, run:state.scrapeRun, results });
-}
+};
 
 // ---- Ein Anbieter: Claude mit Web-Search recherchiert aktuelle Monatspreise ----
 async function scrapeOne(apiKey, company, city, url) {
