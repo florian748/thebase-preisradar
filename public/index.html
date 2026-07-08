@@ -23,7 +23,6 @@ h1,h2,h3,.head{font-family:var(--head);text-transform:uppercase;letter-spacing:.
 a{color:var(--navy)}
 .wrap{max-width:1200px;margin:0 auto;padding:0 22px 80px}
 
-/* Header */
 header.top{background:var(--navy);color:#fff}
 .top .wrap{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:baseline;gap:12px}
@@ -31,24 +30,25 @@ header.top{background:var(--navy);color:#fff}
 .brand .logo b{color:var(--coral)}
 .brand .sub{font-family:var(--head);font-size:13px;color:var(--mint);letter-spacing:.18em}
 .claim{font-family:var(--head);font-size:11px;letter-spacing:.32em;color:rgba(255,255,255,.55)}
+.hright{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .sync{font-size:12px;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8)}
+.who{font-size:11px;color:var(--mint);cursor:pointer}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .dot.on{background:var(--mint)} .dot.local{background:var(--warn)} .dot.err{background:var(--coral)}
 
-/* Tabs + controls */
-nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:20px}
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:20px;flex-wrap:wrap}
 nav.tabs button{font-family:var(--head);text-transform:uppercase;letter-spacing:.06em;font-size:14px;
-  background:none;border:none;padding:12px 18px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
+  background:none;border:none;padding:12px 18px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;position:relative}
 nav.tabs button.active{color:var(--navy);border-bottom-color:var(--coral)}
+.tabbadge{display:inline-block;background:var(--coral);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:6px;font-family:var(--body)}
+
 .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
 .filters .grp{display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .filters .grp button{background:none;border:none;padding:8px 14px;cursor:pointer;font-family:var(--body);font-weight:600;color:var(--muted);font-size:13px}
 .filters .grp button.active{background:var(--navy);color:#fff}
-.filters label{font-size:12px;color:var(--muted);font-weight:600}
 select,input,textarea{font-family:var(--body);font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink)}
 .spacer{flex:1}
 
-/* Cards + KPI */
 .grid{display:grid;gap:16px}
 .g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:2fr 1fr}
 @media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
@@ -57,20 +57,17 @@ select,input,textarea{font-family:var(--body);font-size:13px;border:1px solid va
 .card h3{font-size:14px;color:var(--navy);margin-bottom:12px}
 .eyebrow{font-family:var(--head);font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
 .kpi .val{font-family:var(--head);font-size:34px;color:var(--navy);margin-top:4px}
-.kpi .val small{font-size:15px;color:var(--muted)}
 .kpi.hero{background:var(--navy);color:#fff;border:none}
 .kpi.hero .eyebrow{color:var(--mint)} .kpi.hero .val{color:#fff}
 .pill{display:inline-block;font-weight:700;font-size:12px;padding:3px 9px;border-radius:20px}
 .pill.up{background:#fbe3e1;color:#c0443c} .pill.down{background:#e0efe8;color:var(--good)} .pill.flat{background:#eef0f6;color:var(--muted)}
 
-/* Table */
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
 th{font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#fff;background:var(--navy);position:sticky;top:0}
-th.sub{background:var(--coral)}
 tbody tr:nth-child(even){background:#fafbfe}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
-.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
+.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap}
 .tag.base{background:var(--navy);color:#fff}
 .tag.comp{background:#eef0f6;color:var(--muted)}
 .tag.auto{background:#e0efe8;color:var(--good)} .tag.manual{background:#fdf1dd;color:#a9791f}
@@ -79,14 +76,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .rowbtn{border:none;background:none;cursor:pointer;color:var(--muted);font-weight:700;padding:4px 6px;border-radius:6px}
 .rowbtn:hover{background:#eef0f6;color:var(--navy)}
 
-/* Buttons */
 .btn{font-family:var(--head);text-transform:uppercase;letter-spacing:.05em;font-size:13px;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
 .btn.primary{background:var(--coral);color:#fff}.btn.primary:hover{filter:brightness(.96)}
 .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
 .btn.dark{background:var(--navy);color:#fff}
+.btn.sm{padding:7px 12px;font-size:12px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* Form */
 .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 @media(max-width:800px){.form-grid{grid-template-columns:1fr 1fr}}
 .field{display:flex;flex-direction:column;gap:5px}
@@ -101,8 +97,37 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .right{text-align:right}
 .mt{margin-top:18px}
 .hidden{display:none}
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:50;opacity:0;transition:.2s}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:60;opacity:0;transition:.2s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* Tasks */
+.progress{background:#eef0f6;border-radius:10px;height:12px;overflow:hidden;margin:10px 0}
+.progress i{display:block;height:100%;background:var(--mint);transition:.3s}
+.task{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.task-head{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.task-head:hover{background:#fafbfe}
+.task-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.task-ico.new{background:#e8f0fa}.task-ico.upd{background:#fdf1dd}.task-ico.gap{background:#fbe3e1}
+.task-title{font-weight:700}
+.task-sub{font-size:12px;color:var(--muted)}
+.task-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.task-body{border-top:1px solid var(--line);padding:16px;background:#fafbfe}
+.wiz-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.wiz-prices{grid-template-columns:1fr}}
+.wiz-cat{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
+@media(max-width:700px){.wiz-cat{grid-template-columns:1fr}}
+.done-list{font-size:12px;color:var(--good);margin-top:10px}
+.chip{display:inline-block;background:#e0efe8;color:var(--good);font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;margin:2px 4px 2px 0}
+
+/* Name modal */
+.modal-bg{position:fixed;inset:0;background:rgba(13,23,48,.55);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:380px;width:90%}
+.modal h3{color:var(--navy);font-size:18px;margin-bottom:8px}
+
+/* Log */
+.logrow{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.logrow .ts{color:var(--muted);white-space:nowrap;min-width:120px}
+.logrow .usr{font-weight:700;min-width:80px}
 </style>
 </head>
 <body>
@@ -116,20 +141,37 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
       <div class="sub">PREISRADAR</div>
     </div>
-    <div class="sync"><span id="syncDot" class="dot"></span><span id="syncTxt">Verbinde…</span></div>
+    <div class="hright">
+      <div class="sync"><span id="syncDot" class="dot"></span><span id="syncTxt">Verbinde…</span></div>
+      <div class="who" id="whoami" title="Klicken zum Ändern"></div>
+    </div>
   </div>
 </header>
 
 <div class="wrap">
 
   <nav class="tabs">
-    <button data-tab="dash" class="active">Dashboard</button>
+    <button data-tab="tasks" class="active">Aufgaben<span class="tabbadge" id="taskCount">0</span></button>
+    <button data-tab="dash">Dashboard</button>
     <button data-tab="entry">Preise erfassen</button>
     <button data-tab="control">Steuerung</button>
     <button data-tab="settings">Einstellungen</button>
   </nav>
 
-  <!-- global filters -->
+  <!-- TASKS -->
+  <section id="tab-tasks">
+    <div class="banner">Alles, was gepflegt werden muss — an einem Ort. Task anklicken, Preise direkt eintragen, fertig. <b>Neue Anbieter</b> zuerst erfassen, dann <b>Aktualisierungen</b>.</div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3>Fortschritt heute</h3><span class="small" id="progTxt"></span>
+      </div>
+      <div class="progress"><i id="progBar" style="width:0%"></i></div>
+    </div>
+    <div class="mt" id="taskList"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dash" class="hidden">
   <div class="filters">
     <div class="grp" id="cityGrp">
       <button data-city="Berlin" class="active">Berlin</button>
@@ -153,9 +195,6 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="spacer"></div>
     <span class="note" id="tierHint"></span>
   </div>
-
-  <!-- DASHBOARD -->
-  <section id="tab-dash">
     <div class="grid g4">
       <div class="card kpi hero">
         <div class="eyebrow">Ø The Base</div>
@@ -175,13 +214,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="card kpi">
         <div class="eyebrow">Marktband Wettbewerb</div>
         <div class="val" id="kBand" style="font-size:22px">–</div>
-        <div class="small" id="kBandSub">Min – Max</div>
+        <div class="small">Min – Max</div>
       </div>
     </div>
 
     <div class="grid g2 mt">
       <div class="card">
-        <h3 id="posTitle">Positionierung im Markt</h3>
+        <h3>Positionierung im Markt</h3>
         <div class="chartbox"><canvas id="barChart"></canvas></div>
         <div class="legend">
           <span><span class="sw" style="background:var(--navy)"></span>The Base</span>
@@ -190,9 +229,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
       <div class="card">
         <h3>Kennzahlen (Wettbewerb)</h3>
-        <table>
-          <tbody id="statTable"></tbody>
-        </table>
+        <table><tbody id="statTable"></tbody></table>
         <div class="note mt" id="normNote"></div>
       </div>
     </div>
@@ -210,7 +247,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <thead><tr>
             <th>Anbieter</th><th>Kategorie</th><th>Typ</th><th>Standort</th>
             <th class="right">qm</th><th class="right">Rohpreis</th><th class="right">Norm.</th>
-            <th>Quelle</th><th>Stand</th>
+            <th>Erfassung</th><th>Quelle</th><th>Stand</th>
           </tr></thead>
           <tbody id="detailTable"></tbody>
         </table>
@@ -221,7 +258,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- ENTRY -->
   <section id="tab-entry" class="hidden">
-    <div class="banner">Erfasse einen Preispunkt pro <b>Kategorie × Tier</b>. Für Wettbewerber ohne Kategorie-Detail: Kategorie = „Range" und optional Max-Preis setzen.</div>
+    <div class="banner">Freie Erfassung — für <b>neue Anbieter/Kategorien</b>, die (noch) nicht als Aufgabe angelegt sind. Für die laufende Pflege: Tab <b>Aufgaben</b>.</div>
     <div class="card">
       <h3 id="formTitle">Neuer Preispunkt</h3>
       <div class="form-grid mt">
@@ -233,7 +270,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <select id="f_city"><option>Berlin</option><option>München</option></select></div>
         <div class="field"><label>Standort / Bezirk</label><input id="f_location" list="locations" placeholder="z.B. Friedrichshain"></div>
         <datalist id="locations"></datalist>
-        <div class="field"><label>Zimmerkategorie</label><input id="f_category" placeholder="z.B. Studio / The Base"></div>
+        <div class="field"><label>Zimmerkategorie</label><input id="f_category" placeholder="z.B. Studio M"></div>
         <div class="field"><label>Typ</label>
           <select id="f_type"><option value="coliving">Coliving</option><option value="studio">Studio</option><option value="apartment">Apartment</option></select></div>
         <div class="field"><label>Größe (qm)</label><input id="f_sqm" type="number" step="0.1" placeholder="optional"></div>
@@ -259,7 +296,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <table>
           <thead><tr>
             <th>Scope</th><th>Anbieter</th><th>Stadt</th><th>Standort</th><th>Kategorie</th>
-            <th>Tier</th><th class="right">€</th><th>Stand</th><th></th>
+            <th>Tier</th><th class="right">€</th><th>Erfassung</th><th>Stand</th><th></th>
           </tr></thead>
           <tbody id="allTable"></tbody>
         </table>
@@ -269,24 +306,25 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- CONTROL -->
   <section id="tab-control" class="hidden">
-    <div class="banner">Was ist frisch, was überfällig? Jede Quelle = Anbieter × Standort × Stadt. <b>Rot = jetzt nachtragen.</b></div>
+    <div class="banner">Was ist frisch, was überfällig? Jede Quelle = Anbieter × Stadt. <b>Rot = jetzt nachtragen</b> (steht auch als Aufgabe im Aufgaben-Tab).</div>
     <div class="grid g3">
-      <div class="card kpi"><div class="eyebrow">Frisch</div><div class="val" id="cGood" style="color:var(--good)">0</div><div class="small">≤ 21 Tage</div></div>
-      <div class="card kpi"><div class="eyebrow">Bald fällig</div><div class="val" id="cDue" style="color:#b6851e">0</div><div class="small">21–35 Tage</div></div>
-      <div class="card kpi"><div class="eyebrow">Überfällig</div><div class="val" id="cBad" style="color:var(--bad)">0</div><div class="small">> 35 Tage</div></div>
-    </div>
-    <div class="card mt">
-      <h3>To-Do: diese Quellen nachtragen</h3>
-      <div id="todo"></div>
+      <div class="card kpi"><div class="eyebrow">Frisch</div><div class="val" id="cGood" style="color:var(--good)">0</div><div class="small" id="cGoodSub"></div></div>
+      <div class="card kpi"><div class="eyebrow">Bald fällig</div><div class="val" id="cDue" style="color:#b6851e">0</div><div class="small" id="cDueSub"></div></div>
+      <div class="card kpi"><div class="eyebrow">Überfällig / offen</div><div class="val" id="cBad" style="color:var(--bad)">0</div><div class="small">inkl. Ersterfassung</div></div>
     </div>
     <div class="card mt">
       <h3>Alle Quellen</h3>
       <div style="overflow:auto">
       <table>
-        <thead><tr><th>Anbieter</th><th>Standort</th><th>Stadt</th><th>Methode</th><th class="right"># Punkte</th><th>Letzter Stand</th><th>Status</th></tr></thead>
+        <thead><tr><th>Anbieter</th><th>Stadt</th><th>Segment</th><th>Website</th><th>Erfassung</th><th class="right"># Punkte</th><th>Letzter Stand</th><th>Status</th></tr></thead>
         <tbody id="srcTable"></tbody>
       </table>
       </div>
+    </div>
+    <div class="card mt">
+      <h3>Aktivitätslog</h3>
+      <div class="note">Wer hat wann was gemacht — neueste zuerst.</div>
+      <div class="mt" id="logList" style="max-height:420px;overflow:auto"></div>
     </div>
   </section>
 
@@ -317,8 +355,23 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
     </div>
     <div class="card mt">
+      <h3>Anbieter-Register</h3>
+      <div class="note">Aus diesem Register entstehen die Aufgaben. Neuen Wettbewerber hier anlegen → Ersterfassungs-Aufgabe erscheint automatisch.</div>
+      <div class="form-grid mt" style="grid-template-columns:2fr 1fr 2fr 1.5fr auto">
+        <div class="field"><label>Anbieter</label><input id="r_company" placeholder="Name"></div>
+        <div class="field"><label>Stadt</label><select id="r_city"><option>Berlin</option><option>München</option></select></div>
+        <div class="field"><label>Website</label><input id="r_url" placeholder="https://…"></div>
+        <div class="field"><label>Segment</label><input id="r_segment" placeholder="Coliving"></div>
+        <div class="field"><label>&nbsp;</label><button class="btn dark sm" id="btnAddReg">Hinzufügen</button></div>
+      </div>
+      <div style="overflow:auto;max-height:360px" class="mt">
+        <table><thead><tr><th>Anbieter</th><th>Stadt</th><th>Segment</th><th>Website</th><th></th></tr></thead>
+        <tbody id="regTable"></tbody></table>
+      </div>
+    </div>
+    <div class="card mt">
       <h3>Daten</h3>
-      <div class="note">State liegt in Vercel KV (geteilt) mit LocalStorage-Fallback. Reset lädt den Auslieferungs-Seed neu.</div>
+      <div class="note">State liegt in Vercel KV (geteilt) mit LocalStorage-Fallback. Reset lädt den Auslieferungs-Seed neu (löscht alle Einträge!).</div>
       <div class="mt">
         <button class="btn ghost" id="btnReseed">Seed neu laden</button>
         <button class="btn ghost" id="btnExportJson">JSON exportieren</button>
@@ -329,13 +382,20 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="modal-bg hidden" id="nameModal">
+  <div class="modal">
+    <h3>Wie heißt du?</h3>
+    <div class="note">Dein Name wird an jede Änderung angehängt, damit im Aktivitätslog nachvollziehbar ist, wer was gepflegt hat.</div>
+    <input id="nameInput" placeholder="z.B. Florian" style="width:100%;margin-top:14px">
+    <div class="mt"><button class="btn primary" id="nameSave" style="width:100%">Los geht's</button></div>
+  </div>
+</div>
 
 <script>
-/* ============================ SEED ============================ */
+/* ============================ CONST / SEED ============================ */
 const TODAY = new Date().toISOString().slice(0,10);
-const LEGACY = '2026-05-01'; // Stand der letzten manuellen Wettbewerbsanalyse
+const LEGACY = '2026-05-01';
 
-// Base Berlin: [Kategorie, qm, t1, t2, t3]  (0 = nicht angeboten)
 const baseBER = [
   ['The Ground',20, 1229,1159,0],
   ['The Base',21.5, 1269,1219,1149],
@@ -344,7 +404,6 @@ const baseBER = [
   ['The Base Balcony',23, 1589,1529,1459],
   ['The Grand Balcony',27, 1669,1629,1559],
 ];
-// Base München: [Kategorie, qm(null), t1,t2,t3]
 const baseMUC = [
   ['The Base',null, 1459,1399,1349],
   ['The Base City View',null, 1559,1499,1459],
@@ -353,7 +412,6 @@ const baseMUC = [
   ['The Grand',null, 1849,1799,1739],
   ['The Grand Park View',null, 1979,1929,1869],
 ];
-// Wettbewerber: [company, location, type, qm, t1min,t1max, t2min,t2max, t3min,t3max]  (null = n.a.)
 const compBER = [
   ['Colonies','Prenzlauer Berg','coliving',19, null,null, null,null, 1008,1290],
   ['LifeX','Moabit','coliving',14, null,null, 950,1397, 765,1050],
@@ -377,11 +435,39 @@ const compMUC = [
 const seedLage = {
   'Berlin|Pankow':1.3,'Berlin|Prenzlauer Berg':1.5,'Berlin|Moabit':1.0,'Berlin|Mitte':1.4,
   'Berlin|Wedding':1.1,'Berlin|Charlottenburg':1.3,'Berlin|Friedrichshain':1.5,'Berlin|Kreuzberg':1.5,
-  'Berlin|Adlershof':1.0,'Berlin|Neukölln':1.1,'Berlin|Berlin Mitte':1.4,
+  'Berlin|Adlershof':1.0,'Berlin|Neukölln':1.1,'Berlin|Berlin Mitte':1.4,'Berlin|Pasing':1.0,
   'München|Am Hart':1.0,'München|Milbertshofen':1.0,'München|Innenstadt':1.5,'München|Maxvorstadt':1.5,
   'München|Glockenbachviertel':1.5,'München|Olympiapark':1.2,'München|München Ost':1.2,
-  'München|Werksviertel':1.1,'München|Freiham':0.9
+  'München|Werksviertel':1.1,'München|Freiham':0.9,'München|Pasing':1.0,'München|Planegg':0.85
 };
+
+// Anbieter-Register: [company, city, url, segment]
+const seedRegistry = [
+  ['Colonies','Berlin','https://livecolonies.com','Coliving'],
+  ['LifeX','Berlin','https://joinlifex.com','Coliving'],
+  ['Habyt','Berlin','https://habyt.com','Coliving (Marktführer)'],
+  ['Vonder','Berlin','https://vondereurope.com','Coliving'],
+  ['House of Co','Berlin','https://house-of-co.com','Coliving'],
+  ['The Social Hub','Berlin','https://thesocialhub.co','Hybrid Hotel/Student'],
+  ['Neon Wood','Berlin','https://neonwood.com','PBSA/Student'],
+  ['Circus Living','Berlin','https://circus-living.com','Coliving'],
+  ['BelVillage','Berlin','https://belvillage.com','Coliving'],
+  ['STACEY','Berlin','https://stacey.de','Coliving'],
+  ['Clubhouse Berlin','Berlin','https://findyourcoliving.com/berlin','Coliving'],
+  ['Work & Living','Berlin','https://findyourcoliving.com/berlin','Coliving'],
+  ['Kerlin','Berlin','https://findyourcoliving.com/berlin','Hybrid Hotel/Coliving'],
+  ['LifeX','München','https://joinlifex.com/munich','Coliving'],
+  ['Habyt','München','https://habyt.com','Coliving (Marktführer)'],
+  ['Vonder','München','https://vondereurope.com/locations/deu/munich','Coliving'],
+  ['House of Co','München','https://house-of-co.com','Coliving'],
+  ['Easy Street','München','https://easy-street.de','Coliving (Home & Co)'],
+  ['Werk1 Coliving','München','https://en.werk1.com/coliving-apartments-munich','Coliving Startup'],
+  ['The Fizz','München','https://the-fizz.com','PBSA/Student'],
+  ['ST33','München','https://st33.de','Boarding House'],
+  ['Partio Living','München','https://findyourcoliving.com/munich','Studentenapartments'],
+  ['the Stay.Campus','München','https://findyourcoliving.com/munich','Student'],
+  ['Living Hotels','München','https://findyourcoliving.com/munich','Serviced Apartments'],
+];
 
 let _id = 0; const nid = ()=> 'p'+(Date.now().toString(36))+(_id++);
 
@@ -391,23 +477,61 @@ function buildSeed(){
     const [cat,sqm,t1,t2,t3]=r; const tiers={t1,t2,t3};
     Object.entries(tiers).forEach(([tier,v])=>{ if(v&&v>0) pts.push({
       id:nid(),scope:'base',company:'The Base',city,location:loc,category:cat,roomType:'studio',
-      sqm,tier,price:v,priceMax:null,serviceFee:fee,date:TODAY,method:'manual',sourceUrl:'intern',note:''});});
+      sqm,tier,price:v,priceMax:null,serviceFee:fee,date:TODAY,method:'manual',sourceUrl:'intern',note:'',by:'Seed'});});
   });
   pushBase(baseBER,'Berlin','Pankow',249);
   pushBase(baseMUC,'München','Am Hart',299);
-
   const pushComp=(rows,city)=>rows.forEach(r=>{
     const [company,loc,type,sqm,a1,b1,a2,b2,a3,b3]=r;
     const T={t1:[a1,b1],t2:[a2,b2],t3:[a3,b3]};
     Object.entries(T).forEach(([tier,[mn,mx]])=>{ if(mn!=null) pts.push({
       id:nid(),scope:'competitor',company,city,location:loc,category:'Range',roomType:type,
-      sqm,tier,price:mn,priceMax:(mx!=null&&mx!==mn)?mx:null,serviceFee:null,date:LEGACY,method:'manual',sourceUrl:'',note:''});});
+      sqm,tier,price:mn,priceMax:(mx!=null&&mx!==mn)?mx:null,serviceFee:null,date:LEGACY,method:'manual',sourceUrl:'',note:'',by:'Seed'});});
   });
   pushComp(compBER,'Berlin'); pushComp(compMUC,'München');
-
   return {points:pts, lageFactors:{...seedLage},
-    settings:{refSqm:{Berlin:21.5,'München':21.5}, freshDays:21, dueDays:35},
-    meta:{seededAt:new Date().toISOString()}};
+    registry: seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
+    log:[{ts:new Date().toISOString(),user:'System',action:'Seed geladen',details:pts.length+' Preispunkte, '+seedRegistry.length+' Anbieter'}],
+    settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35},
+    meta:{seededAt:new Date().toISOString(),version:'1.1'}};
+}
+
+// Migration von v1-States (ohne registry/log)
+function migrate(s){
+  if(!s) return s;
+  let changed=false;
+  if(!s.registry){ s.registry=seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})); changed=true; }
+  if(!s.log){ s.log=[]; changed=true; }
+  if(!s.settings) { s.settings={refSqm:{Berlin:21.5,'München':22},freshDays:21,dueDays:35}; changed=true; }
+  if(s.settings.refSqm && s.settings.refSqm['München']===21.5){ s.settings.refSqm['München']=22; changed=true; }
+  (s.points||[]).forEach(p=>{ if(!p.by){p.by='Seed';changed=true;} });
+  if(changed) s.log.push({ts:new Date().toISOString(),user:'System',action:'Migration auf v1.1',details:'Register, Log, München-Referenz 22 qm'});
+  return s;
+}
+
+/* ============================ USER ============================ */
+let USER = localStorage.getItem('preisradar_user')||'';
+function ensureUser(){
+  if(USER){ document.getElementById('whoami').textContent='👤 '+USER; return; }
+  document.getElementById('nameModal').classList.remove('hidden');
+}
+document.getElementById('nameSave').onclick=()=>{
+  const v=document.getElementById('nameInput').value.trim();
+  if(!v){toast('Bitte Namen eingeben');return;}
+  USER=v; localStorage.setItem('preisradar_user',v);
+  document.getElementById('nameModal').classList.add('hidden');
+  document.getElementById('whoami').textContent='👤 '+USER;
+  addLog('Angemeldet','');
+};
+document.getElementById('whoami').onclick=()=>{
+  localStorage.removeItem('preisradar_user'); USER='';
+  document.getElementById('nameInput').value='';
+  ensureUser();
+};
+
+function addLog(action,details){
+  STATE.log.unshift({ts:new Date().toISOString(),user:USER||'?',action,details});
+  if(STATE.log.length>500) STATE.log.length=500;
 }
 
 /* ============================ STATE / SYNC ============================ */
@@ -419,13 +543,13 @@ async function loadState(){
     const r=await fetch('/api/data',{cache:'no-store'});
     if(r.ok){ const j=await r.json();
       if(j.ok){ kvOK=true;
-        if(j.state){ STATE=j.state; setSync('on','Cloud (KV) verbunden'); return; }
-        STATE=localGet()||buildSeed(); await save(true); setSync('on','Cloud (KV) · initialisiert'); return;
+        if(j.state){ STATE=migrate(j.state); setSync('on','Cloud (KV) verbunden'); await save(true); return; }
+        STATE=migrate(localGet())||buildSeed(); await save(true); setSync('on','Cloud (KV) · initialisiert'); return;
       }
     }
-    if(r.status===501){ kvOK=false; STATE=localGet()||buildSeed(); setSync('local','Lokal (KV nicht konfiguriert)'); return; }
+    if(r.status===501){ kvOK=false; STATE=migrate(localGet())||buildSeed(); setSync('local','Lokal (KV nicht konfiguriert)'); return; }
   }catch(e){}
-  kvOK=false; STATE=localGet()||buildSeed(); setSync('err','Offline · lokal');
+  kvOK=false; STATE=migrate(localGet())||buildSeed(); setSync('err','Offline · lokal');
 }
 function localGet(){ try{return JSON.parse(localStorage.getItem(LS));}catch(e){return null;} }
 function localSet(){ try{localStorage.setItem(LS,JSON.stringify(STATE));}catch(e){} }
@@ -438,16 +562,14 @@ function setSync(cls,txt){ const d=document.getElementById('syncDot'),t=document
   d.className='dot '+(cls==='on'?'on':cls==='local'?'local':cls==='err'?'err':''); t.textContent=txt; }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
-/* ============================ FILTERS ============================ */
+/* ============================ HELPERS ============================ */
 const F={city:'Berlin',tier:'t1',type:'all',mode:'raw'};
 const TIERLBL={t1:'T1 · Kurz (Base 1–2 M · Wettb. ~1 M)',t2:'T2 · Mittel (Base 3–4 M · Wettb. ~3 M)',t3:'T3 · Lang (Base 5–6 M · Wettb. ~5–6 M)'};
-
 function lageOf(p){ return STATE.lageFactors[p.city+'|'+p.location] ?? 1.0; }
 function refSqm(city){ return STATE.settings.refSqm[city]||21.5; }
 function sizeFactor(p){ return p.sqm? (p.sqm/refSqm(p.city)) : 1.0; }
 function normPrice(p){ const f=sizeFactor(p)*lageOf(p); return f>0? p.price/f : p.price; }
 function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
-
 function filtered(scope){
   return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier
     && (scope? p.scope===scope : true)
@@ -456,6 +578,176 @@ function filtered(scope){
 const eur=n=> n==null?'–':'€ '+Math.round(n).toLocaleString('de-DE');
 const median=a=>{ if(!a.length)return null; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
 const avg=a=> a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
+function daysSince(d){ return Math.floor((Date.now()-new Date(d).getTime())/86400000); }
+function statusOf(d){ const s=STATE.settings, x=daysSince(d);
+  if(x<=s.freshDays)return{c:'good',t:'frisch'}; if(x<=s.dueDays)return{c:'due',t:'bald fällig'}; return{c:'bad',t:'überfällig'}; }
+const methodTag=m=> m==='auto' ? '<span class="tag auto">🟢 AUTO</span>' : '<span class="tag manual">🟠 MANUELL</span>';
+function fmtTs(iso){ const d=new Date(iso); return d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
+
+/* ============================ TASKS ============================ */
+// Quelle je Registry-Eintrag: Preispunkte des Anbieters in der Stadt
+function pointsFor(company,city){ return STATE.points.filter(p=>p.scope==='competitor'&&p.company===company&&p.city===city); }
+function lastDate(pts){ return pts.reduce((m,p)=>p.date>m?p.date:m,''); }
+
+function buildTasks(){
+  const tasks=[];
+  STATE.registry.forEach(r=>{
+    const pts=pointsFor(r.company,r.city);
+    if(pts.length===0){
+      tasks.push({kind:'new',key:'new|'+r.company+'|'+r.city,reg:r,
+        title:r.company+' · '+r.city+' — Ersterfassung',
+        sub:(r.segment||'')+' · noch keine Preise erfasst'});
+    } else {
+      const ld=lastDate(pts), st=statusOf(ld);
+      if(st.c!=='good'){
+        tasks.push({kind:'upd',key:'upd|'+r.company+'|'+r.city,reg:r,
+          title:r.company+' · '+r.city+' — Preise aktualisieren',
+          sub:'Letzter Stand '+ld+' ('+daysSince(ld)+' Tage) · '+st.t, statusCls:st.c});
+      }
+    }
+  });
+  // Datenlücken: Base-Punkte ohne qm
+  const gaps=STATE.points.filter(p=>p.scope==='base'&&(p.sqm==null));
+  const gapCats=[...new Set(gaps.map(p=>p.city+'|'+p.category))];
+  gapCats.forEach(k=>{
+    const [city,cat]=k.split('|');
+    tasks.push({kind:'gap',key:'gap|'+k,city,cat,
+      title:'The Base '+city+' · „'+cat+'" — qm fehlt',
+      sub:'Größe nachtragen, damit die Normalisierung greift'});
+  });
+  // Sortierung: überfällig zuerst, dann Ersterfassung, dann Rest
+  const rank=t=> t.kind==='upd'&&t.statusCls==='bad'?0 : t.kind==='new'?1 : t.kind==='upd'?2 : 3;
+  return tasks.sort((a,b)=>rank(a)-rank(b));
+}
+
+let openTask=null;
+let sessionDone=0, sessionTotal=null;
+
+function renderTasks(){
+  const tasks=buildTasks();
+  document.getElementById('taskCount').textContent=tasks.length;
+  if(sessionTotal===null) sessionTotal=tasks.length;
+  const done=Math.max(0,sessionTotal-tasks.length+0);
+  const pct=sessionTotal>0? Math.round((sessionDone/(sessionDone+tasks.length))*100||0):100;
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('progTxt').textContent= sessionDone+' erledigt · '+tasks.length+' offen';
+
+  const box=document.getElementById('taskList');
+  if(!tasks.length){ box.innerHTML='<div class="card"><b>Alles erledigt.</b> <span class="note">Keine offenen Aufgaben — die Steuerung meldet sich, sobald etwas fällig wird.</span></div>'; return; }
+
+  box.innerHTML=tasks.map(t=>{
+    const ico=t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
+    const icoCls=t.kind;
+    const badge=t.kind==='upd'? `<span class="status ${t.statusCls}">${t.statusCls==='bad'?'überfällig':'fällig'}</span>` :
+                t.kind==='new'? '<span class="tag comp">NEU</span>':'<span class="tag manual">LÜCKE</span>';
+    const open=openTask===t.key;
+    return `<div class="task" data-key="${t.key}">
+      <div class="task-head" data-toggle="${t.key}">
+        <div class="task-ico ${icoCls}">${ico}</div>
+        <div><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div>
+        <div class="task-right">${badge}<span class="rowbtn">${open?'▲':'▼'}</span></div>
+      </div>
+      ${open? taskBody(t):''}
+    </div>`;
+  }).join('');
+
+  // bind
+  box.querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.toggle; openTask=(openTask===k)?null:k; renderTasks();
+  });
+  bindTaskForms(tasks);
+}
+
+function taskBody(t){
+  if(t.kind==='gap'){
+    return `<div class="task-body">
+      <div class="note">Kategorie: <b>${t.cat}</b> (${t.city}). Trag die Größe in qm ein — gilt für alle Tiers dieser Kategorie.</div>
+      <div class="mt" style="display:flex;gap:12px;align-items:flex-end">
+        <div class="field"><label>Größe (qm)</label><input type="number" step="0.1" id="gap_sqm" placeholder="z.B. 22"></div>
+        <button class="btn primary sm" data-gapsave="${t.city}|${t.cat}">Speichern</button>
+      </div>
+    </div>`;
+  }
+  const r=t.reg;
+  const existing=pointsFor(r.company,r.city);
+  const cats=[...new Set(existing.filter(p=>p.category!=='Range').map(p=>p.category))];
+  const catChips=cats.length? `<div class="done-list">Bereits erfasst: ${cats.map(c=>'<span class="chip">'+c+'</span>').join('')}</div>`:'';
+  const locs=[...new Set(existing.map(p=>p.location))];
+  return `<div class="task-body">
+    <div class="note">Website öffnen: <a href="${r.url}" target="_blank"><b>${r.url.replace('https://','')}</b></a> → Zimmertyp wählen → Monatsraten für 1 / 3 / 6 Monate ablesen. Nicht angebotene Tiers leer lassen.</div>
+    ${catChips}
+    <div class="wiz-cat mt">
+      <div class="field"><label>Zimmerkategorie *</label><input id="w_cat" placeholder="z.B. Studio M"></div>
+      <div class="field"><label>Typ</label><select id="w_type"><option value="coliving">Coliving</option><option value="studio" selected>Studio</option><option value="apartment">Apartment</option></select></div>
+      <div class="field"><label>Größe (qm)</label><input id="w_sqm" type="number" step="0.1" placeholder="opt."></div>
+    </div>
+    <div class="wiz-cat mt" style="grid-template-columns:2fr 2fr">
+      <div class="field"><label>Standort / Bezirk</label><input id="w_loc" value="${locs[0]||''}" placeholder="z.B. Friedrichshain"></div>
+      <div class="field"><label>Quelle-URL (opt.)</label><input id="w_url" placeholder="Direktlink zum Zimmer"></div>
+    </div>
+    <div class="wiz-prices mt">
+      <div class="field"><label>T1 · 1 Monat €</label><input id="w_t1" type="number" step="1" placeholder="leer = n.a."></div>
+      <div class="field"><label>T2 · 3 Monate €</label><input id="w_t2" type="number" step="1" placeholder="leer = n.a."></div>
+      <div class="field"><label>T3 · 6 Monate €</label><input id="w_t3" type="number" step="1" placeholder="leer = n.a."></div>
+    </div>
+    <div class="mt" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary sm" data-wizsave="${r.company}|${r.city}" data-next="more">Speichern + weitere Kategorie</button>
+      <button class="btn dark sm" data-wizsave="${r.company}|${r.city}" data-next="done">Speichern + Anbieter fertig</button>
+      <button class="btn ghost sm" data-wizskip="${r.company}|${r.city}">Heute keine Daten auffindbar</button>
+    </div>
+  </div>`;
+}
+
+function bindTaskForms(){
+  document.querySelectorAll('[data-wizsave]').forEach(b=>b.onclick=async()=>{
+    const [company,city]=b.dataset.wizsave.split('|');
+    const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+    const num=id=>{const v=g(id);return v===''?null:parseFloat(v);};
+    const cat=g('w_cat'); if(!cat){toast('Zimmerkategorie fehlt');return;}
+    const t1=num('w_t1'),t2=num('w_t2'),t3=num('w_t3');
+    if(t1==null&&t2==null&&t3==null){toast('Mindestens einen Preis eintragen');return;}
+    const common={scope:'competitor',company,city,location:g('w_loc')||'—',category:cat,
+      roomType:g('w_type')||'studio',sqm:num('w_sqm'),serviceFee:null,date:TODAY,
+      method:'manual',sourceUrl:g('w_url'),note:'',by:USER};
+    let n=0;
+    [['t1',t1],['t2',t2],['t3',t3]].forEach(([tier,v])=>{
+      if(v!=null){STATE.points.push({...common,id:nid(),tier,price:v,priceMax:null});n++;}
+    });
+    addLog('Preise erfasst',company+' '+city+' · '+cat+' · '+n+' Tier(s)');
+    sessionDone++;
+    if(b.dataset.next==='done'){ openTask=null; addLog('Anbieter abgeschlossen',company+' '+city); }
+    await save(); renderCurrent();
+    toast(n+' Preispunkt(e) gespeichert'+(b.dataset.next==='more'?' – nächste Kategorie':''));
+  });
+  document.querySelectorAll('[data-wizskip]').forEach(b=>b.onclick=async()=>{
+    const [company,city]=b.dataset.wizskip.split('|');
+    // Platzhalter-Punkt mit heutigem Datum, damit Task 3 Wochen ruht; Preis 0 wird gefiltert? Nein: wir loggen nur + verschieben via note-Punkt wäre unsauber.
+    // Sauber: "geprüft"-Marker in registry
+    const r=STATE.registry.find(x=>x.company===company&&x.city===city);
+    if(r){ r.checkedAt=TODAY; }
+    addLog('Quelle geprüft, keine Daten',company+' '+city);
+    openTask=null; await save(); renderCurrent(); toast('Als geprüft markiert');
+  });
+  document.querySelectorAll('[data-gapsave]').forEach(b=>b.onclick=async()=>{
+    const [city,cat]=b.dataset.gapsave.split('|');
+    const v=parseFloat(document.getElementById('gap_sqm').value);
+    if(!v){toast('qm eingeben');return;}
+    STATE.points.forEach(p=>{ if(p.scope==='base'&&p.city===city&&p.category===cat) p.sqm=v; });
+    addLog('qm nachgetragen','The Base '+city+' · '+cat+' = '+v+' qm');
+    sessionDone++; openTask=null;
+    await save(); renderCurrent(); toast('qm gespeichert');
+  });
+}
+
+// Registry-"geprüft"-Marker in Task-Generierung berücksichtigen
+const _origBuildTasks=buildTasks;
+buildTasks=function(){
+  return _origBuildTasks().filter(t=>{
+    if(t.kind!=='new'&&t.kind!=='upd') return true;
+    const r=t.reg; if(!r||!r.checkedAt) return true;
+    return daysSince(r.checkedAt)>STATE.settings.freshDays; // geprüfte Quellen ruhen bis "frisch"-Frist abläuft
+  });
+};
 
 /* ============================ DASHBOARD ============================ */
 let barChart,lineChart;
@@ -463,41 +755,34 @@ function renderDash(){
   document.getElementById('tierHint').textContent=TIERLBL[F.tier];
   const base=filtered('base'), comp=filtered('competitor');
   const baseVals=base.map(valOf);
-  // Wettbewerb: nutze price (und priceMax für Bandobergrenze)
   const compVals=comp.map(valOf);
   const compMaxVals=comp.map(p=> F.mode==='norm'? normPrice({...p,price:(p.priceMax||p.price)}) : (p.priceMax||p.price));
-
   const bAvg=avg(baseVals), cAvg=avg(compVals);
   document.getElementById('kBase').innerHTML= bAvg?eur(bAvg):'–';
   document.getElementById('kBaseSub').textContent= base.length? base.length+' Kategorien' : 'keine Daten';
   document.getElementById('kComp').innerHTML= cAvg?eur(cAvg):'–';
   document.getElementById('kCompSub').textContent= comp.length? new Set(comp.map(c=>c.company)).size+' Anbieter' : 'keine Daten';
-
   const dPill=document.getElementById('kDeltaPill');
   if(bAvg&&cAvg){ const d=bAvg-cAvg, pct=d/cAvg*100;
-    document.getElementById('kDelta').textContent=(d>=0?'+':'')+eur(d).replace('€ ','€ ');
+    document.getElementById('kDelta').textContent=(d>=0?'+':'')+eur(d);
     dPill.textContent=(pct>=0?'+':'')+pct.toFixed(0)+'% vs. Markt';
     dPill.className='pill '+(pct>2?'up':pct<-2?'down':'flat');
   } else { document.getElementById('kDelta').textContent='–'; dPill.textContent='–'; dPill.className='pill flat'; }
-
   const allComp=[...compVals,...compMaxVals];
   document.getElementById('kBand').textContent = allComp.length? eur(Math.min(...allComp))+' – '+eur(Math.max(...allComp)) : '–';
-
-  // stat table
   const st=document.getElementById('statTable');
   const rows=[['Min',compVals.length?Math.min(...compVals):null],['Ø',cAvg],['Median',median(compVals)],['Max',compMaxVals.length?Math.max(...compMaxVals):null]];
   st.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${eur(r[1])}</td></tr>`).join('');
   document.getElementById('normNote').textContent = F.mode==='norm'
     ? 'Normalisiert: bereinigt um Größe & Lage. Zeigt „echten" Preisunterschied pro vergleichbarer Einheit.'
     : 'Rohpreis: Marktrealität wie ausgeschrieben. Umschalten auf „Normalisiert" für den bereinigten Vergleich.';
-
   renderBar(base,comp); renderLine(); renderDetail([...base,...comp]);
 }
 
 function renderBar(base,comp){
   const labels=[], vals=[], colors=[];
   base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.category);vals.push(Math.round(valOf(p)));colors.push('#14285f');});
-  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.company);vals.push(Math.round(valOf(p)));colors.push('#f0786e');});
+  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.company+(p.category!=='Range'?' · '+p.category:''));vals.push(Math.round(valOf(p)));colors.push('#f0786e');});
   const ctx=document.getElementById('barChart');
   if(barChart)barChart.destroy();
   barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
@@ -523,21 +808,22 @@ function renderLine(){
 function renderDetail(list){
   const tb=document.getElementById('detailTable');
   tb.innerHTML=list.sort((a,b)=>valOf(a)-valOf(b)).map(p=>{
-    const src=p.sourceUrl&&p.sourceUrl.startsWith('http')?`<a href="${p.sourceUrl}" target="_blank">Link</a>`:(p.method==='auto'?'auto':'–');
+    const src=p.sourceUrl&&p.sourceUrl.startsWith('http')?`<a href="${p.sourceUrl}" target="_blank">Link</a>`:'–';
     return `<tr>
       <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.company}</span></td>
       <td>${p.category}</td><td><span class="tag ${p.roomType}">${p.roomType}</span></td>
       <td>${p.location}</td><td class="num">${p.sqm??'–'}</td>
       <td class="num">${eur(p.price)}${p.priceMax?'–'+eur(p.priceMax).replace('€ ',''):''}</td>
       <td class="num">${eur(normPrice(p))}</td>
+      <td>${methodTag(p.method)}</td>
       <td>${src}</td><td class="small">${p.date}</td></tr>`;
-  }).join('') || '<tr><td colspan="9" class="note">Keine Daten für diese Filter.</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="note">Keine Daten für diese Filter.</td></tr>';
 }
 
 /* ============================ ENTRY ============================ */
 let editId=null;
 function refreshLists(){
-  document.getElementById('companies').innerHTML=[...new Set(STATE.points.map(p=>p.company))].map(c=>`<option value="${c}">`).join('');
+  document.getElementById('companies').innerHTML=[...new Set([...STATE.points.map(p=>p.company),...STATE.registry.map(r=>r.company)])].map(c=>`<option value="${c}">`).join('');
   document.getElementById('locations').innerHTML=[...new Set(STATE.points.map(p=>p.location))].map(c=>`<option value="${c}">`).join('');
 }
 function renderAll(){
@@ -547,6 +833,7 @@ function renderAll(){
     <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.scope==='base'?'Base':'Wettb.'}</span></td>
     <td>${p.company}</td><td>${p.city}</td><td>${p.location}</td><td>${p.category}</td>
     <td>${p.tier.toUpperCase()}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
+    <td>${methodTag(p.method)}</td>
     <td class="small">${p.date}</td>
     <td class="right"><button class="rowbtn" data-edit="${p.id}">✎</button><button class="rowbtn" data-del="${p.id}">✕</button></td>
   </tr>`).join('');
@@ -557,7 +844,7 @@ function readForm(){
   return {scope:g('f_scope'),company:g('f_company')||(g('f_scope')==='base'?'The Base':''),city:g('f_city'),
     location:g('f_location'),category:g('f_category')||'Range',roomType:g('f_type'),sqm:num('f_sqm'),
     tier:g('f_tier'),price:num('f_price'),priceMax:num('f_pmax'),serviceFee:num('f_fee'),
-    date:g('f_date')||TODAY,sourceUrl:g('f_url'),note:g('f_note')};
+    date:g('f_date')||TODAY,sourceUrl:g('f_url'),note:g('f_note'),by:USER,method:'manual'};
 }
 function fillForm(p){
   const s=(id,v)=>document.getElementById(id).value=(v??'');
@@ -570,32 +857,28 @@ function clearForm(){['f_company','f_location','f_category','f_sqm','f_price','f
   editId=null;document.getElementById('editHint').textContent='';document.getElementById('formTitle').textContent='Neuer Preispunkt';document.getElementById('f_date').value=TODAY;}
 
 /* ============================ CONTROL ============================ */
-function sources(){
-  const map={};
-  STATE.points.filter(p=>p.scope==='competitor').forEach(p=>{
-    const k=p.company+'|'+p.location+'|'+p.city;
-    if(!map[k])map[k]={company:p.company,location:p.location,city:p.city,method:p.method,n:0,last:p.date};
-    map[k].n++; if(p.date>map[k].last)map[k].last=p.date; if(p.method==='auto')map[k].method='auto';
-  });
-  return Object.values(map);
-}
-function daysSince(d){ return Math.floor((Date.now()-new Date(d).getTime())/86400000); }
-function statusOf(d){ const s=STATE.settings, x=daysSince(d);
-  if(x<=s.freshDays)return{c:'good',t:'frisch'}; if(x<=s.dueDays)return{c:'due',t:'bald fällig'}; return{c:'bad',t:'überfällig'}; }
 function renderControl(){
-  const src=sources(); let g=0,d=0,b=0;
-  src.forEach(s=>{const st=statusOf(s.last);st.c==='good'?g++:st.c==='due'?d++:b++;});
-  document.getElementById('cGood').textContent=g;document.getElementById('cDue').textContent=d;document.getElementById('cBad').textContent=b;
-  const todo=src.filter(s=>statusOf(s.last).c!=='good').sort((a,b)=>daysSince(b.last)-daysSince(a.last));
-  document.getElementById('todo').innerHTML= todo.length? todo.map(s=>{const st=statusOf(s.last);
-    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)">
-      <div><b>${s.company}</b> · ${s.location} <span class="small">(${s.city})</span></div>
-      <div class="status ${st.c}">${st.t} · ${daysSince(s.last)} T</div></div>`;}).join('')
-    : '<div class="note">Alles frisch. Nichts nachzutragen.</div>';
-  document.getElementById('srcTable').innerHTML=src.sort((a,b)=>daysSince(b.last)-daysSince(a.last)).map(s=>{const st=statusOf(s.last);
-    return `<tr><td>${s.company}</td><td>${s.location}</td><td>${s.city}</td>
-      <td><span class="tag ${s.method}">${s.method}</span></td><td class="num">${s.n}</td>
-      <td class="small">${s.last}</td><td class="status ${st.c}">${st.t}</td></tr>`;}).join('');
+  let g=0,d=0,b=0;
+  const rows=STATE.registry.map(r=>{
+    const pts=pointsFor(r.company,r.city);
+    let st, ld='—';
+    if(pts.length===0){ st={c:'bad',t:'Ersterfassung offen'}; b++; }
+    else { ld=lastDate(pts); st=statusOf(ld); st.c==='good'?g++:st.c==='due'?d++:b++; }
+    const method=pts.some(p=>p.method==='auto')?'auto':'manual';
+    return `<tr><td><b>${r.company}</b></td><td>${r.city}</td><td class="small">${r.segment||''}</td>
+      <td>${r.url?`<a href="${r.url}" target="_blank">öffnen</a>`:'–'}</td>
+      <td>${pts.length?methodTag(method):'–'}</td>
+      <td class="num">${pts.length}</td>
+      <td class="small">${ld}</td><td class="status ${st.c}">${st.t}</td></tr>`;
+  }).join('');
+  document.getElementById('cGood').textContent=g;
+  document.getElementById('cDue').textContent=d;
+  document.getElementById('cBad').textContent=b;
+  document.getElementById('cGoodSub').textContent='≤ '+STATE.settings.freshDays+' Tage';
+  document.getElementById('cDueSub').textContent=STATE.settings.freshDays+'–'+STATE.settings.dueDays+' Tage';
+  document.getElementById('srcTable').innerHTML=rows;
+  document.getElementById('logList').innerHTML=STATE.log.slice(0,100).map(l=>
+    `<div class="logrow"><span class="ts">${fmtTs(l.ts)}</span><span class="usr">${l.user}</span><span><b>${l.action}</b>${l.details?' · '+l.details:''}</span></div>`).join('')||'<div class="note">Noch keine Aktivitäten.</div>';
 }
 
 /* ============================ SETTINGS ============================ */
@@ -607,63 +890,85 @@ function renderSettings(){
   const keys=Object.keys(STATE.lageFactors).sort();
   document.getElementById('lageTable').innerHTML=keys.map(k=>{const[c,l]=k.split('|');
     return `<tr><td>${c}</td><td>${l}</td><td class="right"><input type="number" step="0.05" style="width:80px;text-align:right" value="${STATE.lageFactors[k]}" data-lage="${k}"></td></tr>`;}).join('');
+  document.getElementById('regTable').innerHTML=STATE.registry
+    .slice().sort((a,b)=>(a.city+a.company).localeCompare(b.city+b.company))
+    .map((r,i)=>`<tr><td><b>${r.company}</b></td><td>${r.city}</td><td class="small">${r.segment||''}</td>
+      <td class="small">${r.url?`<a href="${r.url}" target="_blank">${r.url.replace('https://','').slice(0,32)}…</a>`:'–'}</td>
+      <td class="right"><button class="rowbtn" data-regdel="${r.company}|${r.city}">✕</button></td></tr>`).join('');
+  document.querySelectorAll('[data-regdel]').forEach(b=>b.onclick=async()=>{
+    const [c,ci]=b.dataset.regdel.split('|');
+    if(!confirm(c+' ('+ci+') aus dem Register entfernen? Preispunkte bleiben erhalten.'))return;
+    STATE.registry=STATE.registry.filter(r=>!(r.company===c&&r.city===ci));
+    addLog('Anbieter entfernt',c+' '+ci);
+    await save(); renderCurrent(); toast('Entfernt');
+  });
 }
 
-/* ============================ RENDER ALL ============================ */
-function renderCurrent(){ renderDash(); renderAll(); refreshLists(); renderControl(); renderSettings(); }
+/* ============================ RENDER ============================ */
+function renderCurrent(){ renderTasks(); renderDash(); renderAll(); refreshLists(); renderControl(); renderSettings(); }
 
 /* ============================ EVENTS ============================ */
 function bind(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    ['dash','entry','control','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+    ['tasks','dash','entry','control','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
   });
-  const grp=(id,key,fn)=>document.getElementById(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  const grp=(id,key)=>document.getElementById(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
     document.getElementById(id).querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    F[key]=b.dataset[key]; if(fn)fn(); renderDash();});
-  grp('cityGrp','city',()=>{ ['f_city'].forEach(()=>{}); });
-  grp('tierGrp','tier'); grp('typeGrp','type'); grp('modeGrp','mode');
+    F[key]=b.dataset[key]; renderDash();});
+  grp('cityGrp','city'); grp('tierGrp','tier'); grp('typeGrp','type'); grp('modeGrp','mode');
 
   document.getElementById('btnSave').onclick=async()=>{
     const p=readForm();
     if(!p.company||!p.price){toast('Anbieter und Monatsrate sind Pflicht');return;}
-    p.method='manual';
-    if(editId){ const i=STATE.points.findIndex(x=>x.id===editId); if(i>=0){p.id=editId;STATE.points[i]=p;} }
-    else { p.id=nid(); STATE.points.push(p); }
+    if(editId){ const i=STATE.points.findIndex(x=>x.id===editId); if(i>=0){p.id=editId;STATE.points[i]=p; addLog('Preispunkt geändert',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase());} }
+    else { p.id=nid(); STATE.points.push(p); addLog('Preispunkt angelegt',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase()+' = '+eur(p.price)); }
     await save(); clearForm(); renderCurrent(); toast('Gespeichert');
   };
   document.getElementById('btnClear').onclick=clearForm;
   document.getElementById('allTable').onclick=async e=>{
     const ed=e.target.dataset.edit, dl=e.target.dataset.del;
     if(ed){const p=STATE.points.find(x=>x.id===ed);if(p){editId=ed;fillForm(p);document.getElementById('formTitle').textContent='Preispunkt bearbeiten';document.getElementById('editHint').textContent='Bearbeite bestehenden Eintrag';window.scrollTo({top:0,behavior:'smooth'});}}
-    if(dl){ if(confirm('Diesen Preispunkt löschen?')){STATE.points=STATE.points.filter(x=>x.id!==dl);await save();renderCurrent();toast('Gelöscht');}}
+    if(dl){ const p=STATE.points.find(x=>x.id===dl);
+      if(p&&confirm('Diesen Preispunkt löschen?')){STATE.points=STATE.points.filter(x=>x.id!==dl);addLog('Preispunkt gelöscht',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase());await save();renderCurrent();toast('Gelöscht');}}
   };
   document.getElementById('btnSaveSettings').onclick=async()=>{
     STATE.settings.refSqm.Berlin=parseFloat(document.getElementById('ref_Berlin').value)||21.5;
-    STATE.settings.refSqm['München']=parseFloat(document.getElementById('ref_München').value)||21.5;
+    STATE.settings.refSqm['München']=parseFloat(document.getElementById('ref_München').value)||22;
     STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
     STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
+    addLog('Einstellungen geändert','Referenz-qm / Schwellen');
     await save();renderCurrent();toast('Einstellungen gespeichert');
   };
   document.getElementById('lageTable').onchange=async e=>{
-    const k=e.target.dataset.lage; if(k){STATE.lageFactors[k]=parseFloat(e.target.value)||1;await save();renderDash();toast('Lagefaktor aktualisiert');}
+    const k=e.target.dataset.lage; if(k){STATE.lageFactors[k]=parseFloat(e.target.value)||1;addLog('Lagefaktor geändert',k+' = '+e.target.value);await save();renderDash();toast('Lagefaktor aktualisiert');}
   };
-  document.getElementById('btnReseed').onclick=async()=>{ if(confirm('Seed neu laden? Überschreibt alle aktuellen Daten.')){STATE=buildSeed();await save();renderCurrent();toast('Seed geladen');}};
+  document.getElementById('btnAddReg').onclick=async()=>{
+    const c=document.getElementById('r_company').value.trim();
+    const ci=document.getElementById('r_city').value;
+    if(!c){toast('Anbietername fehlt');return;}
+    if(STATE.registry.some(r=>r.company===c&&r.city===ci)){toast('Existiert bereits');return;}
+    STATE.registry.push({company:c,city:ci,url:document.getElementById('r_url').value.trim(),segment:document.getElementById('r_segment').value.trim()});
+    addLog('Anbieter registriert',c+' '+ci);
+    document.getElementById('r_company').value='';document.getElementById('r_url').value='';document.getElementById('r_segment').value='';
+    await save(); renderCurrent(); toast('Anbieter registriert – Aufgabe erstellt');
+  };
+  document.getElementById('btnReseed').onclick=async()=>{ if(confirm('Seed neu laden? Überschreibt ALLE aktuellen Daten und Logs.')){STATE=buildSeed();addLog('Seed neu geladen','');await save();renderCurrent();toast('Seed geladen');}};
   document.getElementById('btnExportJson').onclick=()=>download('preisradar.json',JSON.stringify(STATE,null,2));
   document.getElementById('btnCsv').onclick=exportCsv;
   document.getElementById('f_date').value=TODAY;
 }
 function exportCsv(){
   const list=[...filtered('base'),...filtered('competitor')];
-  const head=['scope','company','city','location','category','roomType','sqm','tier','price','priceMax','normalized','serviceFee','date','method','sourceUrl'];
-  const rows=list.map(p=>[p.scope,p.company,p.city,p.location,p.category,p.roomType,p.sqm??'',p.tier,p.price,p.priceMax??'',Math.round(normPrice(p)),p.serviceFee??'',p.date,p.method,p.sourceUrl]);
+  const head=['scope','company','city','location','category','roomType','sqm','tier','price','priceMax','normalized','serviceFee','date','method','by','sourceUrl'];
+  const rows=list.map(p=>[p.scope,p.company,p.city,p.location,p.category,p.roomType,p.sqm??'',p.tier,p.price,p.priceMax??'',Math.round(normPrice(p)),p.serviceFee??'',p.date,p.method,p.by||'',p.sourceUrl]);
   const csv=[head.join(';'),...rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';'))].join('\n');
   download(`preisradar_${F.city}_${F.tier}_${TODAY}.csv`,csv);
 }
 function download(name,content){const b=new Blob([content],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
 
 /* ============================ INIT ============================ */
-(async function(){ bind(); await loadState(); renderCurrent(); })();
+(async function(){ bind(); await loadState(); ensureUser(); renderCurrent(); })();
 </script>
 </body>
 </html>
