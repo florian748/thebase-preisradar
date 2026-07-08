@@ -96,7 +96,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .small{font-size:12px}
 .right{text-align:right}
 .mt{margin-top:18px}
-.hidden{display:none}
+.hidden{display:none!important}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:60;opacity:0;transition:.2s;pointer-events:none}
 .toast.show{opacity:1}
 
@@ -524,10 +524,10 @@ document.getElementById('nameSave').onclick=()=>{
   addLog('Angemeldet','');
 };
 document.getElementById('whoami').onclick=()=>{
-  localStorage.removeItem('preisradar_user'); USER='';
-  document.getElementById('nameInput').value='';
-  ensureUser();
+  document.getElementById('nameInput').value=USER;
+  document.getElementById('nameModal').classList.remove('hidden');
 };
+document.getElementById('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('nameSave').click(); });
 
 function addLog(action,details){
   STATE.log.unshift({ts:new Date().toISOString(),user:USER||'?',action,details});
@@ -589,17 +589,26 @@ function fmtTs(iso){ const d=new Date(iso); return d.toLocaleDateString('de-DE')
 function pointsFor(company,city){ return STATE.points.filter(p=>p.scope==='competitor'&&p.company===company&&p.city===city); }
 function lastDate(pts){ return pts.reduce((m,p)=>p.date>m?p.date:m,''); }
 
+let KEEP=null; // {company,city} — Anbieter bleibt als Task offen, bis "fertig" geklickt wird
+
 function buildTasks(){
   const tasks=[];
   STATE.registry.forEach(r=>{
     const pts=pointsFor(r.company,r.city);
+    const resting = r.checkedAt && daysSince(r.checkedAt)<=STATE.settings.freshDays;
+    const kept = KEEP && KEEP.company===r.company && KEEP.city===r.city;
     if(pts.length===0){
+      if(resting && !kept) return;
       tasks.push({kind:'new',key:'new|'+r.company+'|'+r.city,reg:r,
         title:r.company+' · '+r.city+' — Ersterfassung',
         sub:(r.segment||'')+' · noch keine Preise erfasst'});
     } else {
       const ld=lastDate(pts), st=statusOf(ld);
-      if(st.c!=='good'){
+      if(kept){
+        tasks.push({kind:'new',key:'new|'+r.company+'|'+r.city,reg:r,
+          title:r.company+' · '+r.city+' — weitere Kategorien erfassen',
+          sub:'Erfassung läuft · „Anbieter fertig" klicken zum Abschließen'});
+      } else if(st.c!=='good' && !resting){
         tasks.push({kind:'upd',key:'upd|'+r.company+'|'+r.city,reg:r,
           title:r.company+' · '+r.city+' — Preise aktualisieren',
           sub:'Letzter Stand '+ld+' ('+daysSince(ld)+' Tage) · '+st.t, statusCls:st.c});
@@ -653,7 +662,11 @@ function renderTasks(){
 
   // bind
   box.querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>{
-    const k=el.dataset.toggle; openTask=(openTask===k)?null:k; renderTasks();
+    const k=el.dataset.toggle;
+    if(openTask===k){ openTask=null;
+      if(KEEP && k==='new|'+KEEP.company+'|'+KEEP.city) KEEP=null;
+    } else openTask=k;
+    renderTasks();
   });
   bindTaskForms(tasks);
 }
@@ -715,7 +728,8 @@ function bindTaskForms(){
     });
     addLog('Preise erfasst',company+' '+city+' · '+cat+' · '+n+' Tier(s)');
     sessionDone++;
-    if(b.dataset.next==='done'){ openTask=null; addLog('Anbieter abgeschlossen',company+' '+city); }
+    if(b.dataset.next==='done'){ openTask=null; KEEP=null; addLog('Anbieter abgeschlossen',company+' '+city); }
+    else { KEEP={company,city}; }
     await save(); renderCurrent();
     toast(n+' Preispunkt(e) gespeichert'+(b.dataset.next==='more'?' – nächste Kategorie':''));
   });
@@ -739,15 +753,7 @@ function bindTaskForms(){
   });
 }
 
-// Registry-"geprüft"-Marker in Task-Generierung berücksichtigen
-const _origBuildTasks=buildTasks;
-buildTasks=function(){
-  return _origBuildTasks().filter(t=>{
-    if(t.kind!=='new'&&t.kind!=='upd') return true;
-    const r=t.reg; if(!r||!r.checkedAt) return true;
-    return daysSince(r.checkedAt)>STATE.settings.freshDays; // geprüfte Quellen ruhen bis "frisch"-Frist abläuft
-  });
-};
+// (checkedAt-Filter ist in buildTasks integriert)
 
 /* ============================ DASHBOARD ============================ */
 let barChart,lineChart;
