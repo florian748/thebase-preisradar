@@ -190,7 +190,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
     <div class="grp" id="modeGrp">
       <button data-mode="raw" class="active">Rohpreis</button>
-      <button data-mode="norm">Normalisiert</button>
+      <button data-mode="norm">Lagebereinigt</button>
     </div>
     <div class="spacer"></div>
     <span class="note" id="tierHint"></span>
@@ -212,11 +212,12 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="small"><span id="kDeltaPill" class="pill flat">–</span></div>
       </div>
       <div class="card kpi">
-        <div class="eyebrow">Marktband Wettbewerb</div>
-        <div class="val" id="kBand" style="font-size:22px">–</div>
-        <div class="small">Min – Max</div>
+        <div class="eyebrow">Marktindex The Base</div>
+        <div class="val" id="kIndex">–</div>
+        <div class="small" id="kIndexSub">100 = fair zum Markt (Lage & Größe bereinigt)</div>
       </div>
     </div>
+    <div id="alertBanner"></div>
 
     <div class="grid g2 mt">
       <div class="card">
@@ -235,6 +236,13 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
 
     <div class="card mt">
+      <h3>Preis vs. Lage — wer ist teurer, als seine Lage rechtfertigt?</h3>
+      <div class="chartbox"><canvas id="scatterChart"></canvas></div>
+      <div class="note mt">Jeder Punkt = ein aktuelles Angebot. Linie = Lage-fairer Preis (Marktbasis × Lagefaktor, Referenzgröße). Über der Linie: teurer als die Lage rechtfertigt. Δ im Tooltip.</div>
+      <div class="legend"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span><span><span class="sw" style="background:var(--mint)"></span>Fair-Preis-Linie</span></div>
+    </div>
+
+    <div class="card mt">
       <h3>Preisentwicklung (Zeitreihe)</h3>
       <div class="chartbox"><canvas id="lineChart"></canvas></div>
       <div class="note mt">Ø je Erfassungsdatum · The Base vs. Wettbewerb · aktuelle Filter.</div>
@@ -246,7 +254,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <table>
           <thead><tr>
             <th>Anbieter</th><th>Kategorie</th><th>Typ</th><th>Standort</th>
-            <th class="right">qm</th><th class="right">Rohpreis</th><th class="right">Norm.</th>
+            <th class="right">qm</th><th class="right">Rohpreis</th><th class="right">Fair-Preis</th><th class="right">Δ fair</th>
             <th>Erfassung</th><th>Quelle</th><th>Stand</th>
           </tr></thead>
           <tbody id="detailTable"></tbody>
@@ -343,6 +351,9 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <div class="field"><label>Frisch bis</label><input id="set_fresh" type="number"></div>
           <div class="field"><label>Fällig ab</label><input id="set_due" type="number"></div>
         </div>
+        <h3 class="mt">Slack-Alerts (optional)</h3>
+        <div class="field"><label>Incoming-Webhook-URL</label><input id="set_slack" placeholder="https://hooks.slack.com/services/…"></div>
+        <div class="note">Wenn gesetzt: Preisbewegungen &gt;5 % werden nach jedem Scrape-Lauf in den Slack-Kanal gepostet.</div>
         <div class="mt"><button class="btn dark" id="btnSaveSettings">Einstellungen speichern</button></div>
       </div>
       <div class="card">
@@ -502,6 +513,7 @@ function migrate(s){
   let changed=false;
   if(!s.registry){ s.registry=seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})); changed=true; }
   if(!s.log){ s.log=[]; changed=true; }
+  if(!s.alerts){ s.alerts=[]; changed=false||changed; }
   if(!s.settings) { s.settings={refSqm:{Berlin:21.5,'München':22},freshDays:21,dueDays:35}; changed=true; }
   if(s.settings.refSqm && s.settings.refSqm['München']===21.5){ s.settings.refSqm['München']=22; changed=true; }
   (s.points||[]).forEach(p=>{ if(!p.by){p.by='Seed';changed=true;} });
@@ -571,10 +583,22 @@ function sizeFactor(p){ return p.sqm? (p.sqm/refSqm(p.city)) : 1.0; }
 function normPrice(p){ const f=sizeFactor(p)*lageOf(p); return f>0? p.price/f : p.price; }
 function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
 function filtered(scope){
-  return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier
+  return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier && p.status!=='review'
     && (scope? p.scope===scope : true)
     && (F.type==='all' || p.roomType===F.type));
 }
+function latest(points){
+  const map={};
+  points.forEach(p=>{const k=[p.scope,p.company,p.city,p.location,p.category,p.tier].join('|');
+    if(!map[k]||p.date>map[k].date) map[k]=p;});
+  return Object.values(map);
+}
+function marketBasis(){
+  const comp=latest(filtered('competitor'));
+  return median(comp.map(normPrice));
+}
+function fairPrice(p,basis){ if(basis==null)return null; return basis*sizeFactor(p)*lageOf(p); }
+function deltaFair(p,basis){ const f=fairPrice(p,basis); return f? (p.price/f-1) : null; }
 const eur=n=> n==null?'–':'€ '+Math.round(n).toLocaleString('de-DE');
 const median=a=>{ if(!a.length)return null; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
 const avg=a=> a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
@@ -635,8 +659,14 @@ function buildTasks(){
       title:'The Base '+city+' · „'+cat+'" — qm fehlt',
       sub:'Größe nachtragen, damit die Normalisierung greift'});
   });
+  // Review-Tasks: Auto-Punkte mit Ausreißer-Verdacht
+  STATE.points.filter(p=>p.status==='review').forEach(p=>{
+    tasks.push({kind:'review',key:'review|'+p.id,point:p,
+      title:'Preis prüfen: '+p.company+' · '+p.city+' — '+p.category+' '+p.tier.toUpperCase(),
+      sub:(p.note||'Starke Abweichung zum letzten Wert')+' · Quelle: '+(p.sourceUrl||'–')});
+  });
   // Sortierung: überfällig zuerst, dann Ersterfassung, dann Rest
-  const rank=t=> t.kind==='scrape'?-1 : t.kind==='upd'&&t.statusCls==='bad'?0 : t.kind==='new'?1 : t.kind==='upd'?2 : 3;
+  const rank=t=> t.kind==='scrape'?-1 : t.kind==='review'?-0.5 : t.kind==='upd'&&t.statusCls==='bad'?0 : t.kind==='new'?1 : t.kind==='upd'?2 : 3;
   return tasks.sort((a,b)=>rank(a)-rank(b));
 }
 
@@ -657,9 +687,10 @@ function renderTasks(){
 
   const scrapeDue=tasks.some(t=>t.kind==='scrape');
   box.innerHTML=tasks.map((t,i)=>{
-    const ico=t.kind==='scrape'?'🤖':t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
-    const icoCls=t.kind==='scrape'?'new':t.kind;
+    const ico=t.kind==='scrape'?'🤖':t.kind==='review'?'🔍':t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
+    const icoCls=t.kind==='scrape'?'new':t.kind==='review'?'gap':t.kind;
     const badge=t.kind==='scrape'? '<span class="tag auto">SCHRITT 1</span>' :
+                t.kind==='review'? '<span class="status bad">REVIEW</span>' :
                 t.kind==='upd'? `<span class="status ${t.statusCls}">${t.statusCls==='bad'?'überfällig':'fällig'}</span>` :
                 t.kind==='new'? '<span class="tag comp">NEU</span>':'<span class="tag manual">LÜCKE</span>';
     const open=openTask===t.key;
@@ -702,6 +733,17 @@ function taskBody(t){
       </div>
     </div>`;
   }
+  if(t.kind==='review'){
+    const p=t.point;
+    return `<div class="task-body">
+      <div class="note">Der Scraper hat einen Preis gefunden, der stark vom letzten Wert abweicht — Promo, Fehler oder echte Änderung? ${p.sourceUrl&&p.sourceUrl.startsWith('http')?'<a href="'+p.sourceUrl+'" target="_blank"><b>Quelle öffnen</b></a> und kurz prüfen.':''}</div>
+      <div class="mt" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span><b>${eur(p.price)}</b> · ${p.category} · ${p.location} · ${p.date}</span>
+        <button class="btn dark sm" data-revok="${p.id}">Übernehmen</button>
+        <button class="btn ghost sm" data-revno="${p.id}">Verwerfen</button>
+      </div>
+    </div>`;
+  }
   if(t.kind==='gap'){
     return `<div class="task-body">
       <div class="note">Kategorie: <b>${t.cat}</b> (${t.city}). Trag die Größe in qm ein — gilt für alle Tiers dieser Kategorie.</div>
@@ -737,7 +779,9 @@ function taskBody(t){
       <button class="btn primary sm" data-wizsave="${r.company}|${r.city}" data-next="more">Speichern + weitere Kategorie</button>
       <button class="btn dark sm" data-wizsave="${r.company}|${r.city}" data-next="done">Speichern + Anbieter fertig</button>
       <button class="btn ghost sm" data-wizskip="${r.company}|${r.city}">Heute keine Daten auffindbar</button>
+      <button class="btn ghost sm" data-wizmail="${r.company}|${r.city}">Anfrage-Vorlage kopieren</button>
     </div>
+    ${r.requestSentAt?'<div class="note mt">✉️ Anfrage gesendet am '+r.requestSentAt+' — Antwort hier eintragen, sobald sie da ist.</div>':''}
   </div>`;
 }
 
@@ -751,7 +795,12 @@ function bindTaskForms(){
     const cat=g('w_cat'); if(!cat){toast('Zimmerkategorie fehlt');return;}
     const t1=num('w_t1'),t2=num('w_t2'),t3=num('w_t3');
     if(t1==null&&t2==null&&t3==null){toast('Mindestens einen Preis eintragen');return;}
-    const common={scope:'competitor',company,city,location:g('w_loc')||'—',category:cat,
+    const wloc=g('w_loc')||'—';
+    if(wloc!=='—' && STATE.lageFactors[city+'|'+wloc]==null){
+      STATE.lageFactors[city+'|'+wloc]=1.0;
+      toast('Neuer Standort „'+wloc+'" — Lagefaktor 1,0 gesetzt (Einstellungen → anpassen)');
+    }
+    const common={scope:'competitor',company,city,location:wloc,category:cat,
       roomType:g('w_type')||'studio',sqm:num('w_sqm'),serviceFee:null,date:TODAY,
       method:'manual',sourceUrl:g('w_url'),note:'',by:USER};
     let n=0;
@@ -773,6 +822,34 @@ function bindTaskForms(){
     if(r){ r.checkedAt=TODAY; }
     addLog('Quelle geprüft, keine Daten',company+' '+city);
     openTask=null; await save(); renderCurrent(); toast('Als geprüft markiert');
+  });
+  document.querySelectorAll('[data-revok]').forEach(b=>b.onclick=async()=>{
+    const p=STATE.points.find(x=>x.id===b.dataset.revok); if(!p)return;
+    delete p.status; addLog('Review übernommen',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase()+' = '+eur(p.price));
+    sessionDone++; openTask=null; await save(); renderCurrent(); toast('Preis übernommen');
+  });
+  document.querySelectorAll('[data-revno]').forEach(b=>b.onclick=async()=>{
+    const p=STATE.points.find(x=>x.id===b.dataset.revno); if(!p)return;
+    STATE.points=STATE.points.filter(x=>x.id!==p.id);
+    addLog('Review verworfen',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase()+' ('+eur(p.price)+')');
+    sessionDone++; openTask=null; await save(); renderCurrent(); toast('Verworfen');
+  });
+  document.querySelectorAll('[data-wizmail]').forEach(b=>b.onclick=async()=>{
+    const [company,city]=b.dataset.wizmail.split('|');
+    const tpl=`Betreff: Anfrage möbliertes Apartment in ${city} — Preisübersicht
+
+Guten Tag,
+
+ich interessiere mich für ein möbliertes Apartment bei ${company} in ${city} und vergleiche derzeit Angebote für unterschiedliche Aufenthaltsdauern.
+
+Könnten Sie mir bitte Ihre aktuellen Monatsraten für Ihre Zimmerkategorien nennen — jeweils für 1 Monat, 3 Monate und 6 Monate Mietdauer? Falls verfügbar, gern auch die Größe (qm) je Kategorie und einmalige Gebühren (Kaution, Service Fee).
+
+Vielen Dank und freundliche Grüße`;
+    try{ await navigator.clipboard.writeText(tpl); }catch(e){}
+    const r=STATE.registry.find(x=>x.company===company&&x.city===city);
+    if(r) r.requestSentAt=TODAY;
+    addLog('Anfrage-Vorlage kopiert',company+' '+city);
+    await save(); renderTasks(); toast('Vorlage in Zwischenablage — von neutraler Adresse senden');
   });
   document.querySelectorAll('[data-gapsave]').forEach(b=>b.onclick=async()=>{
     const [city,cat]=b.dataset.gapsave.split('|');
@@ -823,7 +900,8 @@ async function runScrape(){
 let barChart,lineChart;
 function renderDash(){
   document.getElementById('tierHint').textContent=TIERLBL[F.tier];
-  const base=filtered('base'), comp=filtered('competitor');
+  const base=latest(filtered('base')), comp=latest(filtered('competitor'));
+  renderAlerts();
   const baseVals=base.map(valOf);
   const compVals=comp.map(valOf);
   const compMaxVals=comp.map(p=> F.mode==='norm'? normPrice({...p,price:(p.priceMax||p.price)}) : (p.priceMax||p.price));
@@ -838,15 +916,53 @@ function renderDash(){
     dPill.textContent=(pct>=0?'+':'')+pct.toFixed(0)+'% vs. Markt';
     dPill.className='pill '+(pct>2?'up':pct<-2?'down':'flat');
   } else { document.getElementById('kDelta').textContent='–'; dPill.textContent='–'; dPill.className='pill flat'; }
-  const allComp=[...compVals,...compMaxVals];
-  document.getElementById('kBand').textContent = allComp.length? eur(Math.min(...allComp))+' – '+eur(Math.max(...allComp)) : '–';
+  const basis=marketBasis();
+  const idx=(bAvg&&basis)? Math.round(avg(base.map(normPrice))/basis*100) : null;
+  document.getElementById('kIndex').textContent = idx!=null? idx : '–';
+  document.getElementById('kIndexSub').innerHTML = idx==null? '100 = fair zum Markt (Lage & Größe bereinigt)' :
+    (idx>102? '<span class="pill up">+'+(idx-100)+' % über Lage-fairem Niveau</span>' :
+     idx<98?  '<span class="pill down">'+(idx-100)+' % unter Lage-fairem Niveau</span>' :
+              '<span class="pill flat">fair zum Markt</span>');
   const st=document.getElementById('statTable');
-  const rows=[['Min',compVals.length?Math.min(...compVals):null],['Ø',cAvg],['Median',median(compVals)],['Max',compMaxVals.length?Math.max(...compMaxVals):null]];
+  const rows=[['Min',compVals.length?Math.min(...compVals):null],['Ø',cAvg],['Median',median(compVals)],['Max',compMaxVals.length?Math.max(...compMaxVals):null],['Marktbasis (lagebereinigt)',basis]];
   st.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${eur(r[1])}</td></tr>`).join('');
   document.getElementById('normNote').textContent = F.mode==='norm'
     ? 'Normalisiert: bereinigt um Größe & Lage. Zeigt „echten" Preisunterschied pro vergleichbarer Einheit.'
     : 'Rohpreis: Marktrealität wie ausgeschrieben. Umschalten auf „Normalisiert" für den bereinigten Vergleich.';
-  renderBar(base,comp); renderLine(); renderDetail([...base,...comp]);
+  renderBar(base,comp); renderScatter(base,comp,basis); renderLine(); renderDetail([...base,...comp],basis);
+}
+
+function renderAlerts(){
+  const box=document.getElementById('alertBanner');
+  const unseen=(STATE.alerts||[]).filter(a=>!a.seen);
+  if(!unseen.length){box.innerHTML='';return;}
+  box.innerHTML=`<div class="banner" style="border-left-color:var(--warn);margin-top:16px">
+    <b>⚠️ ${unseen.length} Preisbewegung(en) seit letztem Lauf</b>
+    <div class="small" style="margin-top:6px">${unseen.slice(0,8).map(a=>'• '+a.text).join('<br>')}</div>
+    <div class="mt"><button class="btn ghost sm" id="alertsSeen">Als gelesen markieren</button></div></div>`;
+  document.getElementById('alertsSeen').onclick=async()=>{
+    (STATE.alerts||[]).forEach(a=>a.seen=true); addLog('Alerts gelesen',unseen.length+' Meldung(en)');
+    await save(); renderDash();
+  };
+}
+
+let scatterChart;
+function renderScatter(base,comp,basis){
+  const ctx=document.getElementById('scatterChart'); if(!ctx)return;
+  if(scatterChart)scatterChart.destroy();
+  const pt=p=>({x:lageOf(p),y:p.price,_p:p});
+  const line=[];
+  if(basis!=null){ for(let x=0.8;x<=1.55;x+=0.05) line.push({x:Math.round(x*100)/100,y:Math.round(basis*x)}); }
+  scatterChart=new Chart(ctx,{type:'scatter',data:{datasets:[
+    {label:'The Base',data:base.map(pt),backgroundColor:'#14285f',pointRadius:6},
+    {label:'Wettbewerber',data:comp.map(pt),backgroundColor:'#f0786e',pointRadius:6},
+    {label:'Fair',data:line,type:'line',borderColor:'#a0c8b6',borderWidth:2,pointRadius:0,fill:false,tension:0}
+  ]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{
+    const p=c.raw._p; if(!p)return null;
+    const d=deltaFair(p,basis);
+    return p.company+' · '+p.category+' — '+eur(p.price)+(p.sqm?' · '+p.sqm+' qm':'')+(d!=null?' · Δ fair '+(d>0?'+':'')+Math.round(d*100)+' %':'');
+  }}}},scales:{x:{title:{display:true,text:'Lagefaktor'},grid:{color:'#eef0f6'},min:0.75,max:1.6},
+    y:{title:{display:true,text:'Rohpreis €/Monat'},ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}}}}});
 }
 
 function renderBar(base,comp){
@@ -875,19 +991,22 @@ function renderLine(){
       scales:{y:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},x:{grid:{display:false}}}}});
 }
 
-function renderDetail(list){
+function renderDetail(list,basis){
   const tb=document.getElementById('detailTable');
   tb.innerHTML=list.sort((a,b)=>valOf(a)-valOf(b)).map(p=>{
     const src=p.sourceUrl&&p.sourceUrl.startsWith('http')?`<a href="${p.sourceUrl}" target="_blank">Link</a>`:'–';
+    const f=fairPrice(p,basis), d=deltaFair(p,basis);
+    const dHtml=d==null?'–':`<span class="pill ${d>0.02?'up':d<-0.02?'down':'flat'}">${d>0?'+':''}${Math.round(d*100)} %</span>`;
     return `<tr>
       <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.company}</span></td>
       <td>${p.category}</td><td><span class="tag ${p.roomType}">${p.roomType}</span></td>
       <td>${p.location}</td><td class="num">${p.sqm??'–'}</td>
       <td class="num">${eur(p.price)}${p.priceMax?'–'+eur(p.priceMax).replace('€ ',''):''}</td>
-      <td class="num">${eur(normPrice(p))}</td>
+      <td class="num">${f?eur(f):'–'}</td>
+      <td class="num">${dHtml}</td>
       <td>${methodTag(p.method)}</td>
       <td>${src}</td><td class="small">${p.date}</td></tr>`;
-  }).join('') || '<tr><td colspan="10" class="note">Keine Daten für diese Filter.</td></tr>';
+  }).join('') || '<tr><td colspan="11" class="note">Keine Daten für diese Filter.</td></tr>';
 }
 
 /* ============================ ENTRY ============================ */
@@ -957,6 +1076,7 @@ function renderSettings(){
   document.getElementById('ref_München').value=STATE.settings.refSqm['München'];
   document.getElementById('set_fresh').value=STATE.settings.freshDays;
   document.getElementById('set_due').value=STATE.settings.dueDays;
+  document.getElementById('set_slack').value=STATE.settings.slackWebhook||'';
   const keys=Object.keys(STATE.lageFactors).sort();
   document.getElementById('lageTable').innerHTML=keys.map(k=>{const[c,l]=k.split('|');
     return `<tr><td>${c}</td><td>${l}</td><td class="right"><input type="number" step="0.05" style="width:80px;text-align:right" value="${STATE.lageFactors[k]}" data-lage="${k}"></td></tr>`;}).join('');
@@ -991,6 +1111,10 @@ function bind(){
   document.getElementById('btnSave').onclick=async()=>{
     const p=readForm();
     if(!p.company||!p.price){toast('Anbieter und Monatsrate sind Pflicht');return;}
+    if(p.location && p.location!=='—' && STATE.lageFactors[p.city+'|'+p.location]==null){
+      STATE.lageFactors[p.city+'|'+p.location]=1.0;
+      toast('Neuer Standort „'+p.location+'" — Lagefaktor 1,0 gesetzt (Einstellungen → anpassen)');
+    }
     if(editId){ const i=STATE.points.findIndex(x=>x.id===editId); if(i>=0){p.id=editId;STATE.points[i]=p; addLog('Preispunkt geändert',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase());} }
     else { p.id=nid(); STATE.points.push(p); addLog('Preispunkt angelegt',p.company+' '+p.city+' · '+p.category+' '+p.tier.toUpperCase()+' = '+eur(p.price)); }
     await save(); clearForm(); renderCurrent(); toast('Gespeichert');
@@ -1007,6 +1131,7 @@ function bind(){
     STATE.settings.refSqm['München']=parseFloat(document.getElementById('ref_München').value)||22;
     STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
     STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
+    STATE.settings.slackWebhook=document.getElementById('set_slack').value.trim();
     addLog('Einstellungen geändert','Referenz-qm / Schwellen');
     await save();renderCurrent();toast('Einstellungen gespeichert');
   };
