@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TheBase · Preisradar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#14285f; --coral:#f0786e; --mint:#a0c8b6; --lblue:#88b4e0;
+  --green:#00382f; --purple:#260a41; --ink:#0d1730; --muted:#6a7590;
+  --line:#e6e9f2; --bg:#f5f6fa; --card:#ffffff; --warn:#e7b34a; --bad:#e0605a; --good:#3f9d7a;
+  --head:'Oswald','Arial Narrow',Impact,sans-serif;
+  --body:'Inter','Noto Sans',Arial,Helvetica,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+h1,h2,h3,.head{font-family:var(--head);text-transform:uppercase;letter-spacing:.02em;line-height:.95;margin:0}
+a{color:var(--navy)}
+.wrap{max-width:1200px;margin:0 auto;padding:0 22px 80px}
+
+/* Header */
+header.top{background:var(--navy);color:#fff}
+.top .wrap{padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand .logo{font-family:var(--head);font-weight:700;font-size:22px;letter-spacing:.03em}
+.brand .logo b{color:var(--coral)}
+.brand .sub{font-family:var(--head);font-size:13px;color:var(--mint);letter-spacing:.18em}
+.claim{font-family:var(--head);font-size:11px;letter-spacing:.32em;color:rgba(255,255,255,.55)}
+.sync{font-size:12px;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--mint)} .dot.local{background:var(--warn)} .dot.err{background:var(--coral)}
+
+/* Tabs + controls */
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:20px}
+nav.tabs button{font-family:var(--head);text-transform:uppercase;letter-spacing:.06em;font-size:14px;
+  background:none;border:none;padding:12px 18px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent}
+nav.tabs button.active{color:var(--navy);border-bottom-color:var(--coral)}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.filters .grp{display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.filters .grp button{background:none;border:none;padding:8px 14px;cursor:pointer;font-family:var(--body);font-weight:600;color:var(--muted);font-size:13px}
+.filters .grp button.active{background:var(--navy);color:#fff}
+.filters label{font-size:12px;color:var(--muted);font-weight:600}
+select,input,textarea{font-family:var(--body);font-size:13px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;color:var(--ink)}
+.spacer{flex:1}
+
+/* Cards + KPI */
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:2fr 1fr}
+@media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.g4,.g3,.g2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card h3{font-size:14px;color:var(--navy);margin-bottom:12px}
+.eyebrow{font-family:var(--head);font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+.kpi .val{font-family:var(--head);font-size:34px;color:var(--navy);margin-top:4px}
+.kpi .val small{font-size:15px;color:var(--muted)}
+.kpi.hero{background:var(--navy);color:#fff;border:none}
+.kpi.hero .eyebrow{color:var(--mint)} .kpi.hero .val{color:#fff}
+.pill{display:inline-block;font-weight:700;font-size:12px;padding:3px 9px;border-radius:20px}
+.pill.up{background:#fbe3e1;color:#c0443c} .pill.down{background:#e0efe8;color:var(--good)} .pill.flat{background:#eef0f6;color:var(--muted)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#fff;background:var(--navy);position:sticky;top:0}
+th.sub{background:var(--coral)}
+tbody tr:nth-child(even){background:#fafbfe}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px}
+.tag.base{background:var(--navy);color:#fff}
+.tag.comp{background:#eef0f6;color:var(--muted)}
+.tag.auto{background:#e0efe8;color:var(--good)} .tag.manual{background:#fdf1dd;color:#a9791f}
+.tag.coliving{background:#e8f0fa;color:#2f6bb0}.tag.studio{background:#f3ecfb;color:#6a3fb0}.tag.apartment{background:#e0efe8;color:var(--good)}
+.status{font-weight:700;font-size:12px}.status.good{color:var(--good)}.status.due{color:#b6851e}.status.bad{color:var(--bad)}
+.rowbtn{border:none;background:none;cursor:pointer;color:var(--muted);font-weight:700;padding:4px 6px;border-radius:6px}
+.rowbtn:hover{background:#eef0f6;color:var(--navy)}
+
+/* Buttons */
+.btn{font-family:var(--head);text-transform:uppercase;letter-spacing:.05em;font-size:13px;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
+.btn.primary{background:var(--coral);color:#fff}.btn.primary:hover{filter:brightness(.96)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+.btn.dark{background:var(--navy);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:800px){.form-grid{grid-template-columns:1fr 1fr}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.note{font-size:12px;color:var(--muted)}
+.banner{background:#fff;border:1px solid var(--line);border-left:4px solid var(--coral);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px}
+.chartbox{position:relative;height:300px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.small{font-size:12px}
+.right{text-align:right}
+.mt{margin-top:18px}
+.hidden{display:none}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:50;opacity:0;transition:.2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div>
+        <div class="logo">The<b>Base</b></div>
+        <div class="claim">LIVE. BELONG. GROW.</div>
+      </div>
+      <div class="sub">PREISRADAR</div>
+    </div>
+    <div class="sync"><span id="syncDot" class="dot"></span><span id="syncTxt">Verbinde…</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="tabs">
+    <button data-tab="dash" class="active">Dashboard</button>
+    <button data-tab="entry">Preise erfassen</button>
+    <button data-tab="control">Steuerung</button>
+    <button data-tab="settings">Einstellungen</button>
+  </nav>
+
+  <!-- global filters -->
+  <div class="filters">
+    <div class="grp" id="cityGrp">
+      <button data-city="Berlin" class="active">Berlin</button>
+      <button data-city="München">München</button>
+    </div>
+    <div class="grp" id="tierGrp">
+      <button data-tier="t1" class="active">T1 · Kurz</button>
+      <button data-tier="t2">T2 · Mittel</button>
+      <button data-tier="t3">T3 · Lang</button>
+    </div>
+    <div class="grp" id="typeGrp">
+      <button data-type="all" class="active">Alle Typen</button>
+      <button data-type="coliving">Coliving</button>
+      <button data-type="studio">Studio</button>
+      <button data-type="apartment">Apartment</button>
+    </div>
+    <div class="grp" id="modeGrp">
+      <button data-mode="raw" class="active">Rohpreis</button>
+      <button data-mode="norm">Normalisiert</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="note" id="tierHint"></span>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dash">
+    <div class="grid g4">
+      <div class="card kpi hero">
+        <div class="eyebrow">Ø The Base</div>
+        <div class="val" id="kBase">–</div>
+        <div class="small" id="kBaseSub" style="color:var(--mint)"></div>
+      </div>
+      <div class="card kpi">
+        <div class="eyebrow">Ø Wettbewerb</div>
+        <div class="val" id="kComp">–</div>
+        <div class="small" id="kCompSub"></div>
+      </div>
+      <div class="card kpi">
+        <div class="eyebrow">Delta Base vs. Markt</div>
+        <div class="val" id="kDelta">–</div>
+        <div class="small"><span id="kDeltaPill" class="pill flat">–</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="eyebrow">Marktband Wettbewerb</div>
+        <div class="val" id="kBand" style="font-size:22px">–</div>
+        <div class="small" id="kBandSub">Min – Max</div>
+      </div>
+    </div>
+
+    <div class="grid g2 mt">
+      <div class="card">
+        <h3 id="posTitle">Positionierung im Markt</h3>
+        <div class="chartbox"><canvas id="barChart"></canvas></div>
+        <div class="legend">
+          <span><span class="sw" style="background:var(--navy)"></span>The Base</span>
+          <span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Kennzahlen (Wettbewerb)</h3>
+        <table>
+          <tbody id="statTable"></tbody>
+        </table>
+        <div class="note mt" id="normNote"></div>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h3>Preisentwicklung (Zeitreihe)</h3>
+      <div class="chartbox"><canvas id="lineChart"></canvas></div>
+      <div class="note mt">Ø je Erfassungsdatum · The Base vs. Wettbewerb · aktuelle Filter.</div>
+    </div>
+
+    <div class="card mt">
+      <h3>Detailtabelle</h3>
+      <div style="overflow:auto;max-height:460px">
+        <table>
+          <thead><tr>
+            <th>Anbieter</th><th>Kategorie</th><th>Typ</th><th>Standort</th>
+            <th class="right">qm</th><th class="right">Rohpreis</th><th class="right">Norm.</th>
+            <th>Quelle</th><th>Stand</th>
+          </tr></thead>
+          <tbody id="detailTable"></tbody>
+        </table>
+      </div>
+      <div class="mt"><button class="btn ghost" id="btnCsv">CSV Export</button></div>
+    </div>
+  </section>
+
+  <!-- ENTRY -->
+  <section id="tab-entry" class="hidden">
+    <div class="banner">Erfasse einen Preispunkt pro <b>Kategorie × Tier</b>. Für Wettbewerber ohne Kategorie-Detail: Kategorie = „Range" und optional Max-Preis setzen.</div>
+    <div class="card">
+      <h3 id="formTitle">Neuer Preispunkt</h3>
+      <div class="form-grid mt">
+        <div class="field"><label>Scope</label>
+          <select id="f_scope"><option value="competitor">Wettbewerber</option><option value="base">The Base</option></select></div>
+        <div class="field"><label>Anbieter</label><input id="f_company" list="companies" placeholder="z.B. Habyt"></div>
+        <datalist id="companies"></datalist>
+        <div class="field"><label>Stadt</label>
+          <select id="f_city"><option>Berlin</option><option>München</option></select></div>
+        <div class="field"><label>Standort / Bezirk</label><input id="f_location" list="locations" placeholder="z.B. Friedrichshain"></div>
+        <datalist id="locations"></datalist>
+        <div class="field"><label>Zimmerkategorie</label><input id="f_category" placeholder="z.B. Studio / The Base"></div>
+        <div class="field"><label>Typ</label>
+          <select id="f_type"><option value="coliving">Coliving</option><option value="studio">Studio</option><option value="apartment">Apartment</option></select></div>
+        <div class="field"><label>Größe (qm)</label><input id="f_sqm" type="number" step="0.1" placeholder="optional"></div>
+        <div class="field"><label>Tier</label>
+          <select id="f_tier"><option value="t1">T1 · Kurz</option><option value="t2">T2 · Mittel</option><option value="t3">T3 · Lang</option></select></div>
+        <div class="field"><label>Monatsrate €</label><input id="f_price" type="number" step="1" placeholder="z.B. 1290"></div>
+        <div class="field"><label>Max-Preis € (opt.)</label><input id="f_pmax" type="number" step="1" placeholder="bei Range"></div>
+        <div class="field"><label>Service Fee € (opt.)</label><input id="f_fee" type="number" step="1" placeholder="einmalig"></div>
+        <div class="field"><label>Stand (Datum)</label><input id="f_date" type="date"></div>
+        <div class="field"><label>Quelle-URL (opt.)</label><input id="f_url" placeholder="https://…"></div>
+        <div class="field" style="grid-column:span 2"><label>Notiz (opt.)</label><input id="f_note" placeholder="z.B. inkl. Nebenkosten"></div>
+      </div>
+      <div class="mt">
+        <button class="btn primary" id="btnSave">Speichern</button>
+        <button class="btn ghost" id="btnClear">Felder leeren</button>
+        <span id="editHint" class="note"></span>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h3>Alle Preispunkte</h3>
+      <div style="overflow:auto;max-height:520px">
+        <table>
+          <thead><tr>
+            <th>Scope</th><th>Anbieter</th><th>Stadt</th><th>Standort</th><th>Kategorie</th>
+            <th>Tier</th><th class="right">€</th><th>Stand</th><th></th>
+          </tr></thead>
+          <tbody id="allTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROL -->
+  <section id="tab-control" class="hidden">
+    <div class="banner">Was ist frisch, was überfällig? Jede Quelle = Anbieter × Standort × Stadt. <b>Rot = jetzt nachtragen.</b></div>
+    <div class="grid g3">
+      <div class="card kpi"><div class="eyebrow">Frisch</div><div class="val" id="cGood" style="color:var(--good)">0</div><div class="small">≤ 21 Tage</div></div>
+      <div class="card kpi"><div class="eyebrow">Bald fällig</div><div class="val" id="cDue" style="color:#b6851e">0</div><div class="small">21–35 Tage</div></div>
+      <div class="card kpi"><div class="eyebrow">Überfällig</div><div class="val" id="cBad" style="color:var(--bad)">0</div><div class="small">> 35 Tage</div></div>
+    </div>
+    <div class="card mt">
+      <h3>To-Do: diese Quellen nachtragen</h3>
+      <div id="todo"></div>
+    </div>
+    <div class="card mt">
+      <h3>Alle Quellen</h3>
+      <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Anbieter</th><th>Standort</th><th>Stadt</th><th>Methode</th><th class="right"># Punkte</th><th>Letzter Stand</th><th>Status</th></tr></thead>
+        <tbody id="srcTable"></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="tab-settings" class="hidden">
+    <div class="banner">Normalisierung: <b>Vergleichspreis = Rohpreis / (Größenfaktor × Lagefaktor)</b>. Größenfaktor = qm / Referenz-qm. Lagefaktor spiegelt die City-Tier-Logik des Standortanalyse-Agenten (editierbar).</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Referenz-Größe (qm = Faktor 1,0)</h3>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Berlin</label><input id="ref_Berlin" type="number" step="0.1"></div>
+          <div class="field"><label>München</label><input id="ref_München" type="number" step="0.1"></div>
+        </div>
+        <h3 class="mt">Schwellen Steuerung (Tage)</h3>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Frisch bis</label><input id="set_fresh" type="number"></div>
+          <div class="field"><label>Fällig ab</label><input id="set_due" type="number"></div>
+        </div>
+        <div class="mt"><button class="btn dark" id="btnSaveSettings">Einstellungen speichern</button></div>
+      </div>
+      <div class="card">
+        <h3>Lagefaktoren</h3>
+        <div class="note">1,0 = neutral · höher = bessere Lage (rechtfertigt höheren Preis).</div>
+        <div style="overflow:auto;max-height:420px" class="mt">
+          <table><thead><tr><th>Stadt</th><th>Standort</th><th class="right">Faktor</th></tr></thead>
+          <tbody id="lageTable"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="card mt">
+      <h3>Daten</h3>
+      <div class="note">State liegt in Vercel KV (geteilt) mit LocalStorage-Fallback. Reset lädt den Auslieferungs-Seed neu.</div>
+      <div class="mt">
+        <button class="btn ghost" id="btnReseed">Seed neu laden</button>
+        <button class="btn ghost" id="btnExportJson">JSON exportieren</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================ SEED ============================ */
+const TODAY = new Date().toISOString().slice(0,10);
+const LEGACY = '2026-05-01'; // Stand der letzten manuellen Wettbewerbsanalyse
+
+// Base Berlin: [Kategorie, qm, t1, t2, t3]  (0 = nicht angeboten)
+const baseBER = [
+  ['The Ground',20, 1229,1159,0],
+  ['The Base',21.5, 1269,1219,1149],
+  ['The Base View',20, 1319,1289,1229],
+  ['The Grand',25, 1489,1429,1349],
+  ['The Base Balcony',23, 1589,1529,1459],
+  ['The Grand Balcony',27, 1669,1629,1559],
+];
+// Base München: [Kategorie, qm(null), t1,t2,t3]
+const baseMUC = [
+  ['The Base',null, 1459,1399,1349],
+  ['The Base City View',null, 1559,1499,1459],
+  ['The Base Easy',null, 1669,1609,1559],
+  ['The Base Park View',null, 1749,1699,1629],
+  ['The Grand',null, 1849,1799,1739],
+  ['The Grand Park View',null, 1979,1929,1869],
+];
+// Wettbewerber: [company, location, type, qm, t1min,t1max, t2min,t2max, t3min,t3max]  (null = n.a.)
+const compBER = [
+  ['Colonies','Prenzlauer Berg','coliving',19, null,null, null,null, 1008,1290],
+  ['LifeX','Moabit','coliving',14, null,null, 950,1397, 765,1050],
+  ['Neon Wood','Adlershof','apartment',17, null,null, null,null, 1020,1510],
+  ['Habyt','Friedrichshain','studio',20, null,null, 1010,1520, 1190,1600],
+  ['Vonder','Kreuzberg','apartment',27, 1095,1495, 1095,1495, 1095,1495],
+  ['Circus Living','Friedrichshain','studio',22, 1402,1771, 1541,1988, 1830,2289],
+  ['The Social Hub','Friedrichshain','studio',16, null,null, 1175,1350, 1216,1216],
+  ['House of Co','Berlin Mitte','studio',null, null,null, null,null, 999,1200],
+];
+const compMUC = [
+  ['House of Co','Milbertshofen','studio',null, null,null, null,null, 819,829],
+  ['LifeX','Maxvorstadt','coliving',null, null,null, null,null, 967,1460],
+  ['Habyt','Innenstadt','studio',null, 785,1115, null,null, 650,1060],
+  ['The Fizz','Olympiapark','studio',null, null,null, null,null, 1292,1730],
+  ['Easy Street','München Ost','studio',null, null,null, null,null, 1495,2595],
+  ['Werk1 Coliving','Werksviertel','coliving',null, 855,855, null,null, 855,855],
+  ['Vonder','Freiham','apartment',null, 1195,1395, null,null, 1195,1395],
+];
+
+const seedLage = {
+  'Berlin|Pankow':1.3,'Berlin|Prenzlauer Berg':1.5,'Berlin|Moabit':1.0,'Berlin|Mitte':1.4,
+  'Berlin|Wedding':1.1,'Berlin|Charlottenburg':1.3,'Berlin|Friedrichshain':1.5,'Berlin|Kreuzberg':1.5,
+  'Berlin|Adlershof':1.0,'Berlin|Neukölln':1.1,'Berlin|Berlin Mitte':1.4,
+  'München|Am Hart':1.0,'München|Milbertshofen':1.0,'München|Innenstadt':1.5,'München|Maxvorstadt':1.5,
+  'München|Glockenbachviertel':1.5,'München|Olympiapark':1.2,'München|München Ost':1.2,
+  'München|Werksviertel':1.1,'München|Freiham':0.9
+};
+
+let _id = 0; const nid = ()=> 'p'+(Date.now().toString(36))+(_id++);
+
+function buildSeed(){
+  const pts=[];
+  const pushBase=(rows,city,loc,fee)=>rows.forEach(r=>{
+    const [cat,sqm,t1,t2,t3]=r; const tiers={t1,t2,t3};
+    Object.entries(tiers).forEach(([tier,v])=>{ if(v&&v>0) pts.push({
+      id:nid(),scope:'base',company:'The Base',city,location:loc,category:cat,roomType:'studio',
+      sqm,tier,price:v,priceMax:null,serviceFee:fee,date:TODAY,method:'manual',sourceUrl:'intern',note:''});});
+  });
+  pushBase(baseBER,'Berlin','Pankow',249);
+  pushBase(baseMUC,'München','Am Hart',299);
+
+  const pushComp=(rows,city)=>rows.forEach(r=>{
+    const [company,loc,type,sqm,a1,b1,a2,b2,a3,b3]=r;
+    const T={t1:[a1,b1],t2:[a2,b2],t3:[a3,b3]};
+    Object.entries(T).forEach(([tier,[mn,mx]])=>{ if(mn!=null) pts.push({
+      id:nid(),scope:'competitor',company,city,location:loc,category:'Range',roomType:type,
+      sqm,tier,price:mn,priceMax:(mx!=null&&mx!==mn)?mx:null,serviceFee:null,date:LEGACY,method:'manual',sourceUrl:'',note:''});});
+  });
+  pushComp(compBER,'Berlin'); pushComp(compMUC,'München');
+
+  return {points:pts, lageFactors:{...seedLage},
+    settings:{refSqm:{Berlin:21.5,'München':21.5}, freshDays:21, dueDays:35},
+    meta:{seededAt:new Date().toISOString()}};
+}
+
+/* ============================ STATE / SYNC ============================ */
+let STATE=null, kvOK=false;
+const LS='thebase_preisradar_v1';
+
+async function loadState(){
+  try{
+    const r=await fetch('/api/data',{cache:'no-store'});
+    if(r.ok){ const j=await r.json();
+      if(j.ok){ kvOK=true;
+        if(j.state){ STATE=j.state; setSync('on','Cloud (KV) verbunden'); return; }
+        STATE=localGet()||buildSeed(); await save(true); setSync('on','Cloud (KV) · initialisiert'); return;
+      }
+    }
+    if(r.status===501){ kvOK=false; STATE=localGet()||buildSeed(); setSync('local','Lokal (KV nicht konfiguriert)'); return; }
+  }catch(e){}
+  kvOK=false; STATE=localGet()||buildSeed(); setSync('err','Offline · lokal');
+}
+function localGet(){ try{return JSON.parse(localStorage.getItem(LS));}catch(e){return null;} }
+function localSet(){ try{localStorage.setItem(LS,JSON.stringify(STATE));}catch(e){} }
+async function save(silent){
+  localSet();
+  if(kvOK){ try{ const r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(STATE)});
+    if(!r.ok) setSync('err','Speichern fehlgeschlagen'); else if(!silent) setSync('on','Gespeichert'); }catch(e){ setSync('err','Speichern fehlgeschlagen'); } }
+}
+function setSync(cls,txt){ const d=document.getElementById('syncDot'),t=document.getElementById('syncTxt');
+  d.className='dot '+(cls==='on'?'on':cls==='local'?'local':cls==='err'?'err':''); t.textContent=txt; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ============================ FILTERS ============================ */
+const F={city:'Berlin',tier:'t1',type:'all',mode:'raw'};
+const TIERLBL={t1:'T1 · Kurz (Base 1–2 M · Wettb. ~1 M)',t2:'T2 · Mittel (Base 3–4 M · Wettb. ~3 M)',t3:'T3 · Lang (Base 5–6 M · Wettb. ~5–6 M)'};
+
+function lageOf(p){ return STATE.lageFactors[p.city+'|'+p.location] ?? 1.0; }
+function refSqm(city){ return STATE.settings.refSqm[city]||21.5; }
+function sizeFactor(p){ return p.sqm? (p.sqm/refSqm(p.city)) : 1.0; }
+function normPrice(p){ const f=sizeFactor(p)*lageOf(p); return f>0? p.price/f : p.price; }
+function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
+
+function filtered(scope){
+  return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier
+    && (scope? p.scope===scope : true)
+    && (F.type==='all' || p.roomType===F.type));
+}
+const eur=n=> n==null?'–':'€ '+Math.round(n).toLocaleString('de-DE');
+const median=a=>{ if(!a.length)return null; const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+const avg=a=> a.length? a.reduce((x,y)=>x+y,0)/a.length : null;
+
+/* ============================ DASHBOARD ============================ */
+let barChart,lineChart;
+function renderDash(){
+  document.getElementById('tierHint').textContent=TIERLBL[F.tier];
+  const base=filtered('base'), comp=filtered('competitor');
+  const baseVals=base.map(valOf);
+  // Wettbewerb: nutze price (und priceMax für Bandobergrenze)
+  const compVals=comp.map(valOf);
+  const compMaxVals=comp.map(p=> F.mode==='norm'? normPrice({...p,price:(p.priceMax||p.price)}) : (p.priceMax||p.price));
+
+  const bAvg=avg(baseVals), cAvg=avg(compVals);
+  document.getElementById('kBase').innerHTML= bAvg?eur(bAvg):'–';
+  document.getElementById('kBaseSub').textContent= base.length? base.length+' Kategorien' : 'keine Daten';
+  document.getElementById('kComp').innerHTML= cAvg?eur(cAvg):'–';
+  document.getElementById('kCompSub').textContent= comp.length? new Set(comp.map(c=>c.company)).size+' Anbieter' : 'keine Daten';
+
+  const dPill=document.getElementById('kDeltaPill');
+  if(bAvg&&cAvg){ const d=bAvg-cAvg, pct=d/cAvg*100;
+    document.getElementById('kDelta').textContent=(d>=0?'+':'')+eur(d).replace('€ ','€ ');
+    dPill.textContent=(pct>=0?'+':'')+pct.toFixed(0)+'% vs. Markt';
+    dPill.className='pill '+(pct>2?'up':pct<-2?'down':'flat');
+  } else { document.getElementById('kDelta').textContent='–'; dPill.textContent='–'; dPill.className='pill flat'; }
+
+  const allComp=[...compVals,...compMaxVals];
+  document.getElementById('kBand').textContent = allComp.length? eur(Math.min(...allComp))+' – '+eur(Math.max(...allComp)) : '–';
+
+  // stat table
+  const st=document.getElementById('statTable');
+  const rows=[['Min',compVals.length?Math.min(...compVals):null],['Ø',cAvg],['Median',median(compVals)],['Max',compMaxVals.length?Math.max(...compMaxVals):null]];
+  st.innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${eur(r[1])}</td></tr>`).join('');
+  document.getElementById('normNote').textContent = F.mode==='norm'
+    ? 'Normalisiert: bereinigt um Größe & Lage. Zeigt „echten" Preisunterschied pro vergleichbarer Einheit.'
+    : 'Rohpreis: Marktrealität wie ausgeschrieben. Umschalten auf „Normalisiert" für den bereinigten Vergleich.';
+
+  renderBar(base,comp); renderLine(); renderDetail([...base,...comp]);
+}
+
+function renderBar(base,comp){
+  const labels=[], vals=[], colors=[];
+  base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.category);vals.push(Math.round(valOf(p)));colors.push('#14285f');});
+  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>{labels.push(p.company);vals.push(Math.round(valOf(p)));colors.push('#f0786e');});
+  const ctx=document.getElementById('barChart');
+  if(barChart)barChart.destroy();
+  barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>eur(c.raw)}}},
+      scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+}
+
+function renderLine(){
+  const base=filtered('base'), comp=filtered('competitor');
+  const dates=[...new Set([...base,...comp].map(p=>p.date))].sort();
+  const byDate=(arr,d)=>arr.filter(p=>p.date===d).map(valOf);
+  const bLine=dates.map(d=>{const v=avg(byDate(base,d));return v?Math.round(v):null;});
+  const cLine=dates.map(d=>{const v=avg(byDate(comp,d));return v?Math.round(v):null;});
+  const ctx=document.getElementById('lineChart');
+  if(lineChart)lineChart.destroy();
+  lineChart=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[
+    {label:'The Base',data:bLine,borderColor:'#14285f',backgroundColor:'#14285f',tension:.25,spanGaps:true},
+    {label:'Wettbewerb',data:cLine,borderColor:'#f0786e',backgroundColor:'#f0786e',tension:.25,spanGaps:true}]},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+eur(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},x:{grid:{display:false}}}}});
+}
+
+function renderDetail(list){
+  const tb=document.getElementById('detailTable');
+  tb.innerHTML=list.sort((a,b)=>valOf(a)-valOf(b)).map(p=>{
+    const src=p.sourceUrl&&p.sourceUrl.startsWith('http')?`<a href="${p.sourceUrl}" target="_blank">Link</a>`:(p.method==='auto'?'auto':'–');
+    return `<tr>
+      <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.company}</span></td>
+      <td>${p.category}</td><td><span class="tag ${p.roomType}">${p.roomType}</span></td>
+      <td>${p.location}</td><td class="num">${p.sqm??'–'}</td>
+      <td class="num">${eur(p.price)}${p.priceMax?'–'+eur(p.priceMax).replace('€ ',''):''}</td>
+      <td class="num">${eur(normPrice(p))}</td>
+      <td>${src}</td><td class="small">${p.date}</td></tr>`;
+  }).join('') || '<tr><td colspan="9" class="note">Keine Daten für diese Filter.</td></tr>';
+}
+
+/* ============================ ENTRY ============================ */
+let editId=null;
+function refreshLists(){
+  document.getElementById('companies').innerHTML=[...new Set(STATE.points.map(p=>p.company))].map(c=>`<option value="${c}">`).join('');
+  document.getElementById('locations').innerHTML=[...new Set(STATE.points.map(p=>p.location))].map(c=>`<option value="${c}">`).join('');
+}
+function renderAll(){
+  const tb=document.getElementById('allTable');
+  const list=[...STATE.points].sort((a,b)=> (a.city+a.company+a.category).localeCompare(b.city+b.company+b.category));
+  tb.innerHTML=list.map(p=>`<tr>
+    <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.scope==='base'?'Base':'Wettb.'}</span></td>
+    <td>${p.company}</td><td>${p.city}</td><td>${p.location}</td><td>${p.category}</td>
+    <td>${p.tier.toUpperCase()}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
+    <td class="small">${p.date}</td>
+    <td class="right"><button class="rowbtn" data-edit="${p.id}">✎</button><button class="rowbtn" data-del="${p.id}">✕</button></td>
+  </tr>`).join('');
+}
+function readForm(){
+  const g=id=>document.getElementById(id).value.trim();
+  const num=id=>{const v=document.getElementById(id).value.trim();return v===''?null:parseFloat(v);};
+  return {scope:g('f_scope'),company:g('f_company')||(g('f_scope')==='base'?'The Base':''),city:g('f_city'),
+    location:g('f_location'),category:g('f_category')||'Range',roomType:g('f_type'),sqm:num('f_sqm'),
+    tier:g('f_tier'),price:num('f_price'),priceMax:num('f_pmax'),serviceFee:num('f_fee'),
+    date:g('f_date')||TODAY,sourceUrl:g('f_url'),note:g('f_note')};
+}
+function fillForm(p){
+  const s=(id,v)=>document.getElementById(id).value=(v??'');
+  s('f_scope',p.scope);s('f_company',p.company);s('f_city',p.city);s('f_location',p.location);
+  s('f_category',p.category==='Range'?'':p.category);s('f_type',p.roomType);s('f_sqm',p.sqm);
+  s('f_tier',p.tier);s('f_price',p.price);s('f_pmax',p.priceMax);s('f_fee',p.serviceFee);
+  s('f_date',p.date);s('f_url',p.sourceUrl);s('f_note',p.note);
+}
+function clearForm(){['f_company','f_location','f_category','f_sqm','f_price','f_pmax','f_fee','f_url','f_note'].forEach(id=>document.getElementById(id).value='');
+  editId=null;document.getElementById('editHint').textContent='';document.getElementById('formTitle').textContent='Neuer Preispunkt';document.getElementById('f_date').value=TODAY;}
+
+/* ============================ CONTROL ============================ */
+function sources(){
+  const map={};
+  STATE.points.filter(p=>p.scope==='competitor').forEach(p=>{
+    const k=p.company+'|'+p.location+'|'+p.city;
+    if(!map[k])map[k]={company:p.company,location:p.location,city:p.city,method:p.method,n:0,last:p.date};
+    map[k].n++; if(p.date>map[k].last)map[k].last=p.date; if(p.method==='auto')map[k].method='auto';
+  });
+  return Object.values(map);
+}
+function daysSince(d){ return Math.floor((Date.now()-new Date(d).getTime())/86400000); }
+function statusOf(d){ const s=STATE.settings, x=daysSince(d);
+  if(x<=s.freshDays)return{c:'good',t:'frisch'}; if(x<=s.dueDays)return{c:'due',t:'bald fällig'}; return{c:'bad',t:'überfällig'}; }
+function renderControl(){
+  const src=sources(); let g=0,d=0,b=0;
+  src.forEach(s=>{const st=statusOf(s.last);st.c==='good'?g++:st.c==='due'?d++:b++;});
+  document.getElementById('cGood').textContent=g;document.getElementById('cDue').textContent=d;document.getElementById('cBad').textContent=b;
+  const todo=src.filter(s=>statusOf(s.last).c!=='good').sort((a,b)=>daysSince(b.last)-daysSince(a.last));
+  document.getElementById('todo').innerHTML= todo.length? todo.map(s=>{const st=statusOf(s.last);
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div><b>${s.company}</b> · ${s.location} <span class="small">(${s.city})</span></div>
+      <div class="status ${st.c}">${st.t} · ${daysSince(s.last)} T</div></div>`;}).join('')
+    : '<div class="note">Alles frisch. Nichts nachzutragen.</div>';
+  document.getElementById('srcTable').innerHTML=src.sort((a,b)=>daysSince(b.last)-daysSince(a.last)).map(s=>{const st=statusOf(s.last);
+    return `<tr><td>${s.company}</td><td>${s.location}</td><td>${s.city}</td>
+      <td><span class="tag ${s.method}">${s.method}</span></td><td class="num">${s.n}</td>
+      <td class="small">${s.last}</td><td class="status ${st.c}">${st.t}</td></tr>`;}).join('');
+}
+
+/* ============================ SETTINGS ============================ */
+function renderSettings(){
+  document.getElementById('ref_Berlin').value=STATE.settings.refSqm.Berlin;
+  document.getElementById('ref_München').value=STATE.settings.refSqm['München'];
+  document.getElementById('set_fresh').value=STATE.settings.freshDays;
+  document.getElementById('set_due').value=STATE.settings.dueDays;
+  const keys=Object.keys(STATE.lageFactors).sort();
+  document.getElementById('lageTable').innerHTML=keys.map(k=>{const[c,l]=k.split('|');
+    return `<tr><td>${c}</td><td>${l}</td><td class="right"><input type="number" step="0.05" style="width:80px;text-align:right" value="${STATE.lageFactors[k]}" data-lage="${k}"></td></tr>`;}).join('');
+}
+
+/* ============================ RENDER ALL ============================ */
+function renderCurrent(){ renderDash(); renderAll(); refreshLists(); renderControl(); renderSettings(); }
+
+/* ============================ EVENTS ============================ */
+function bind(){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    ['dash','entry','control','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+  });
+  const grp=(id,key,fn)=>document.getElementById(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    document.getElementById(id).querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    F[key]=b.dataset[key]; if(fn)fn(); renderDash();});
+  grp('cityGrp','city',()=>{ ['f_city'].forEach(()=>{}); });
+  grp('tierGrp','tier'); grp('typeGrp','type'); grp('modeGrp','mode');
+
+  document.getElementById('btnSave').onclick=async()=>{
+    const p=readForm();
+    if(!p.company||!p.price){toast('Anbieter und Monatsrate sind Pflicht');return;}
+    p.method='manual';
+    if(editId){ const i=STATE.points.findIndex(x=>x.id===editId); if(i>=0){p.id=editId;STATE.points[i]=p;} }
+    else { p.id=nid(); STATE.points.push(p); }
+    await save(); clearForm(); renderCurrent(); toast('Gespeichert');
+  };
+  document.getElementById('btnClear').onclick=clearForm;
+  document.getElementById('allTable').onclick=async e=>{
+    const ed=e.target.dataset.edit, dl=e.target.dataset.del;
+    if(ed){const p=STATE.points.find(x=>x.id===ed);if(p){editId=ed;fillForm(p);document.getElementById('formTitle').textContent='Preispunkt bearbeiten';document.getElementById('editHint').textContent='Bearbeite bestehenden Eintrag';window.scrollTo({top:0,behavior:'smooth'});}}
+    if(dl){ if(confirm('Diesen Preispunkt löschen?')){STATE.points=STATE.points.filter(x=>x.id!==dl);await save();renderCurrent();toast('Gelöscht');}}
+  };
+  document.getElementById('btnSaveSettings').onclick=async()=>{
+    STATE.settings.refSqm.Berlin=parseFloat(document.getElementById('ref_Berlin').value)||21.5;
+    STATE.settings.refSqm['München']=parseFloat(document.getElementById('ref_München').value)||21.5;
+    STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
+    STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
+    await save();renderCurrent();toast('Einstellungen gespeichert');
+  };
+  document.getElementById('lageTable').onchange=async e=>{
+    const k=e.target.dataset.lage; if(k){STATE.lageFactors[k]=parseFloat(e.target.value)||1;await save();renderDash();toast('Lagefaktor aktualisiert');}
+  };
+  document.getElementById('btnReseed').onclick=async()=>{ if(confirm('Seed neu laden? Überschreibt alle aktuellen Daten.')){STATE=buildSeed();await save();renderCurrent();toast('Seed geladen');}};
+  document.getElementById('btnExportJson').onclick=()=>download('preisradar.json',JSON.stringify(STATE,null,2));
+  document.getElementById('btnCsv').onclick=exportCsv;
+  document.getElementById('f_date').value=TODAY;
+}
+function exportCsv(){
+  const list=[...filtered('base'),...filtered('competitor')];
+  const head=['scope','company','city','location','category','roomType','sqm','tier','price','priceMax','normalized','serviceFee','date','method','sourceUrl'];
+  const rows=list.map(p=>[p.scope,p.company,p.city,p.location,p.category,p.roomType,p.sqm??'',p.tier,p.price,p.priceMax??'',Math.round(normPrice(p)),p.serviceFee??'',p.date,p.method,p.sourceUrl]);
+  const csv=[head.join(';'),...rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';'))].join('\n');
+  download(`preisradar_${F.city}_${F.tier}_${TODAY}.csv`,csv);
+}
+function download(name,content){const b=new Blob([content],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
+
+/* ============================ INIT ============================ */
+(async function(){ bind(); await loadState(); renderCurrent(); })();
+</script>
+</body>
+</html>
