@@ -51,18 +51,29 @@ module.exports = async function handler(req, res) {
     const [company, city] = key.split('|');
     const reg = (state.registry || []).find(r => r.company === company && r.city === city) || {};
     try {
-      const points = await scrapeOne(apiKey, company, city, reg.url);
+      const isAgg = reg.type === 'aggregator';
+      const points = isAgg
+        ? await scrapeAggregator(apiKey, company, city, reg.url)
+        : await scrapeOne(apiKey, company, city, reg.url);
       for (const p of points) {
+        const realCompany = isAgg ? (p.company || '').trim() : company;
+        if (isAgg && !realCompany) continue;
+        // Discovery: unbekannten Anbieter automatisch registrieren (ohne manuelle Tasks zu erzeugen — er hat ja sofort Punkte)
+        if (isAgg && !(state.registry || []).some(r2 => r2.company === realCompany && r2.city === city)) {
+          state.registry.push({ company: realCompany, city, url: '', segment: 'Entdeckt via ' + company });
+          state.log = state.log || [];
+          state.log.unshift({ ts:new Date().toISOString(), user:'Scraper', action:'Neuer Anbieter entdeckt', details: realCompany + ' (' + city + ') via ' + company });
+        }
         const tier = ['t1','t2','t3'].includes(p.tier) ? p.tier : 't1';
         const category = p.category || 'Range';
         // Serie: neuester bestehender Punkt gleicher (Anbieter, Stadt, Kategorie, Tier)
-        const series = state.points.filter(x => x.scope==='competitor' && x.company===company && x.city===city && x.category===category && x.tier===tier && x.status!=='review');
+        const series = state.points.filter(x => x.scope==='competitor' && x.company===realCompany && x.city===city && x.category===category && x.tier===tier && x.status!=='review');
         const last = series.sort((a,b)=> (a.date<b.date?1:-1))[0] || null;
         // DEDUPE: identischer Preis -> nur Datum bestätigen, kein neuer Punkt
         if (last && last.price === p.price) { last.date = today; continue; }
         const np = {
           id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          scope:'competitor', company, city,
+          scope:'competitor', company: realCompany, city,
           location: p.location || (last && last.location) || '—',
           category,
           roomType: ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : (last && last.roomType) || 'studio',
@@ -71,8 +82,13 @@ module.exports = async function handler(req, res) {
           price: p.price,
           priceMax: (typeof p.priceMax === 'number' && p.priceMax > p.price) ? p.priceMax : null,
           serviceFee: null, date: today, method:'auto',
-          sourceUrl: p.sourceUrl || reg.url || '', note:'Auto-Scrape', by:'Scraper'
+          sourceUrl: p.sourceUrl || reg.url || '', note: isAgg ? 'Auto via ' + company : 'Auto-Scrape', by:'Scraper'
         };
+        if (typeof p.address === 'string' && p.address.length > 5) {
+          np.address = p.address.slice(0, 120);
+          const geo = await geocode(np.address, city);
+          if (geo) { np.lat = geo.lat; np.lng = geo.lng; }
+        }
         if (last) {
           const chg = p.price / last.price - 1;
           if (Math.abs(chg) > 0.30) {
@@ -126,6 +142,19 @@ module.exports = async function handler(req, res) {
   return res.status(200).json({ ok:true, processed:todo.length, remaining, foundThisBatch, run:state.scrapeRun, results });
 };
 
+// ---- Nominatim-Geocoding (OSM, sparsam & mit User-Agent gemäß Usage Policy) ----
+async function geocode(address, city) {
+  try {
+    const q = encodeURIComponent(address + ', ' + city + ', Deutschland');
+    const r = await fetch('https://nominatim.openstreetmap.org/search?q=' + q + '&format=json&limit=1',
+      { headers: { 'User-Agent': 'thebase-preisradar/1.6 (internal pricing tool)' } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (Array.isArray(j) && j[0]) return { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon) };
+  } catch (e) {}
+  return null;
+}
+
 // ---- Ein Anbieter: Claude mit Web-Search recherchiert aktuelle Monatspreise ----
 async function scrapeOne(apiKey, company, city, url) {
   const prompt =
@@ -139,7 +168,7 @@ Regeln:
 - roomType: "coliving" (Zimmer in geteilter Wohnung), "studio" (eigene Küche+Bad), "apartment" (größer/getrennte Räume).
 - Wenn nichts Belastbares gefunden wird: leeres Array.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
-[{"category":"Studio M","location":"Bezirk/Stadtteil","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+[{"category":"Studio M","location":"Bezirk/Stadtteil","address":"Straße Hausnr (falls genannt, sonst null)","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
 
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -153,6 +182,35 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
   });
   if (!r.ok) throw new Error('Claude API ' + r.status);
   const data = await r.json();
+  return parseJsonArray(data, 8);
+}
+
+// ---- Aggregator (Wunderflats/Homelike/HousingAnywhere): liefert Angebote MIT echtem Anbieternamen ----
+async function scrapeAggregator(apiKey, aggName, city, url) {
+  const prompt =
+`Durchsuche die Plattform "${aggName}" (${url}) nach möblierten Long-Stay-Angeboten (ab 1 Monat) in ${city} von PROFESSIONELLEN Anbietern (Coliving-Betreiber, Serviced-Apartment-Ketten — keine Privatvermieter).
+Regeln:
+- Je Angebot: den ECHTEN Anbieter-/Betreibernamen als "company" (z. B. "Habyt", "Vonder"), NICHT den Plattformnamen.
+- Nur konkrete Euro-Monatspreise von 2026. Mietdauer: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate; unklar = t1.
+- Maximal 6 Angebote, bevorzugt bekannte Betreiber mit mehreren Einheiten.
+- Wenn nichts Belastbares: leeres Array.
+Antworte AUSSCHLIESSLICH mit einem JSON-Array:
+[{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'content-type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6', max_tokens: 2000,
+      tools: [{ type:'web_fetch_20250910', name:'web_fetch', max_uses:4 }, { type:'web_search_20250305', name:'web_search', max_uses:3 }],
+      messages: [{ role:'user', content: prompt }]
+    })
+  });
+  if (!r.ok) throw new Error('Claude API ' + r.status);
+  const data = await r.json();
+  return parseJsonArray(data, 6);
+}
+
+function parseJsonArray(data, cap) {
   const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n');
   const m = text.match(/\[[\s\S]*\]/);
   if (!m) return [];
@@ -161,5 +219,5 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
   if (!Array.isArray(arr)) return [];
   return arr
     .filter(p => p && typeof p.price === 'number' && p.price > 200 && p.price < 6000)
-    .slice(0, 8);
+    .slice(0, cap);
 }
