@@ -591,8 +591,19 @@ function lastDate(pts){ return pts.reduce((m,p)=>p.date>m?p.date:m,''); }
 
 let KEEP=null; // {company,city} — Anbieter bleibt als Task offen, bis "fertig" geklickt wird
 
+function scrapeStatus(){
+  const m=STATE.meta||{};
+  if(m.scrapeDueAt) return {due:true,reason:'Vom Zeitplan angestoßen (1. & 15. des Monats)'};
+  if(!m.lastScrapeAt) return {due:true,reason:'Noch nie gelaufen — Erstlauf empfohlen'};
+  const d=daysSince(m.lastScrapeAt.slice(0,10));
+  if(d>=14) return {due:true,reason:'Letzter Lauf vor '+d+' Tagen'};
+  return {due:false,last:m.lastScrapeAt,days:d};
+}
+
 function buildTasks(){
   const tasks=[];
+  const sc=scrapeStatus();
+  if(sc.due) tasks.push({kind:'scrape',key:'scrape',title:'Automatisches Scraping durchführen',sub:sc.reason});
   STATE.registry.forEach(r=>{
     const pts=pointsFor(r.company,r.city);
     const resting = r.checkedAt && daysSince(r.checkedAt)<=STATE.settings.freshDays;
@@ -625,7 +636,7 @@ function buildTasks(){
       sub:'Größe nachtragen, damit die Normalisierung greift'});
   });
   // Sortierung: überfällig zuerst, dann Ersterfassung, dann Rest
-  const rank=t=> t.kind==='upd'&&t.statusCls==='bad'?0 : t.kind==='new'?1 : t.kind==='upd'?2 : 3;
+  const rank=t=> t.kind==='scrape'?-1 : t.kind==='upd'&&t.statusCls==='bad'?0 : t.kind==='new'?1 : t.kind==='upd'?2 : 3;
   return tasks.sort((a,b)=>rank(a)-rank(b));
 }
 
@@ -644,13 +655,16 @@ function renderTasks(){
   const box=document.getElementById('taskList');
   if(!tasks.length){ box.innerHTML='<div class="card"><b>Alles erledigt.</b> <span class="note">Keine offenen Aufgaben — die Steuerung meldet sich, sobald etwas fällig wird.</span></div>'; return; }
 
-  box.innerHTML=tasks.map(t=>{
-    const ico=t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
-    const icoCls=t.kind;
-    const badge=t.kind==='upd'? `<span class="status ${t.statusCls}">${t.statusCls==='bad'?'überfällig':'fällig'}</span>` :
+  const scrapeDue=tasks.some(t=>t.kind==='scrape');
+  box.innerHTML=tasks.map((t,i)=>{
+    const ico=t.kind==='scrape'?'🤖':t.kind==='new'?'🆕':t.kind==='upd'?'🔄':'✏️';
+    const icoCls=t.kind==='scrape'?'new':t.kind;
+    const badge=t.kind==='scrape'? '<span class="tag auto">SCHRITT 1</span>' :
+                t.kind==='upd'? `<span class="status ${t.statusCls}">${t.statusCls==='bad'?'überfällig':'fällig'}</span>` :
                 t.kind==='new'? '<span class="tag comp">NEU</span>':'<span class="tag manual">LÜCKE</span>';
     const open=openTask===t.key;
-    return `<div class="task" data-key="${t.key}">
+    const sep=(scrapeDue && i===1)? '<div class="eyebrow" style="margin:18px 0 10px">Schritt 2 · Manuelle Pflege — reduziert sich nach dem Scraping automatisch</div>':'';
+    return sep+`<div class="task" data-key="${t.key}">
       <div class="task-head" data-toggle="${t.key}">
         <div class="task-ico ${icoCls}">${ico}</div>
         <div><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div>
@@ -672,6 +686,22 @@ function renderTasks(){
 }
 
 function taskBody(t){
+  if(t.kind==='scrape'){
+    const total=STATE.registry.length;
+    return `<div class="task-body">
+      <div class="note">Prüft alle <b>${total} registrierten Quellen</b> per KI-Websuche auf aktuelle Monatspreise und trägt Treffer automatisch ein (Badge 🟢 AUTO). Dauer: ca. ${Math.ceil(total/2)*0.5|0}–${Math.ceil(total*0.7)} Minuten — Tab offen lassen. Quellen ohne öffentliche Preise bleiben danach als manuelle Aufgabe stehen.</div>
+      <div class="mt" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn primary" id="scrapeBtn">Jetzt scrapen</button>
+        <span class="small" id="scrapeStat"></span>
+      </div>
+      <div class="progress mt hidden" id="scrapeProg"><i id="scrapeProgBar" style="width:0%"></i></div>
+      <div class="note hidden mt" id="scrapeKeyHint">
+        <b>Einrichtung nötig (einmalig):</b> Vercel → Projekt <i>thebase-preisradar</i> → Settings → Environment Variables →
+        <code>ANTHROPIC_API_KEY</code> = neuer Key aus console.anthropic.com → danach Redeploy.
+        Wichtig: <b>neuen</b> Key erstellen — der zuvor im Screenshot sichtbare Key gilt als kompromittiert und sollte widerrufen werden.
+      </div>
+    </div>`;
+  }
   if(t.kind==='gap'){
     return `<div class="task-body">
       <div class="note">Kategorie: <b>${t.cat}</b> (${t.city}). Trag die Größe in qm ein — gilt für alle Tiers dieser Kategorie.</div>
@@ -712,6 +742,8 @@ function taskBody(t){
 }
 
 function bindTaskForms(){
+  const sBtn=document.getElementById('scrapeBtn');
+  if(sBtn) sBtn.onclick=()=>runScrape();
   document.querySelectorAll('[data-wizsave]').forEach(b=>b.onclick=async()=>{
     const [company,city]=b.dataset.wizsave.split('|');
     const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
@@ -754,6 +786,38 @@ function bindTaskForms(){
 }
 
 // (checkedAt-Filter ist in buildTasks integriert)
+
+let SCRAPING=false;
+async function runScrape(){
+  if(SCRAPING) return; SCRAPING=true;
+  const btn=document.getElementById('scrapeBtn'), stat=document.getElementById('scrapeStat'),
+        prog=document.getElementById('scrapeProg'), bar=document.getElementById('scrapeProgBar'),
+        hint=document.getElementById('scrapeKeyHint');
+  btn.disabled=true; prog.classList.remove('hidden');
+  const total=STATE.registry.length;
+  let remaining=total;
+  try{
+    while(remaining>0){
+      const r=await fetch('/api/scrape',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({batch:2})});
+      if(r.status===501){ const j=await r.json().catch(()=>({}));
+        stat.textContent='⚠️ '+(j.error||'Nicht konfiguriert'); hint.classList.remove('hidden');
+        btn.disabled=false; SCRAPING=false; return; }
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      remaining=j.remaining;
+      const done=j.run?j.run.checked:0, found=j.run?j.run.found:0;
+      stat.textContent=done+' von '+total+' Quellen geprüft · '+found+' Preispunkte gefunden';
+      bar.style.width=Math.round(done/total*100)+'%';
+    }
+    stat.textContent='Abgeschlossen — lade Ergebnisse…';
+    await loadState(); openTask=null; SCRAPING=false;
+    renderCurrent(); toast('Scraping abgeschlossen — Aufgaben aktualisiert');
+  }catch(e){
+    stat.textContent='Fehler: '+e.message+' — erneut versuchen (setzt dort fort, wo es aufgehört hat)';
+    btn.disabled=false; SCRAPING=false;
+  }
+}
 
 /* ============================ DASHBOARD ============================ */
 let barChart,lineChart;
