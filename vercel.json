@@ -1,7 +1,4 @@
 {
-  "crons": [
-    { "path": "/api/scrape", "schedule": "0 6 1,15 * *" }
-  ],
   "functions": {
     "api/scrape.js": { "maxDuration": 60 }
   }
