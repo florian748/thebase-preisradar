@@ -1,0 +1,9 @@
+{
+  "name": "thebase-preisradar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Base – Wettbewerber-Preisradar (Long-Stay)",
+  "dependencies": {
+    "@vercel/kv": "^1.0.1"
+  }
+}
