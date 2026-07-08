@@ -53,19 +53,41 @@ module.exports = async function handler(req, res) {
     try {
       const points = await scrapeOne(apiKey, company, city, reg.url);
       for (const p of points) {
-        state.points.push({
+        const tier = ['t1','t2','t3'].includes(p.tier) ? p.tier : 't1';
+        const category = p.category || 'Range';
+        // Serie: neuester bestehender Punkt gleicher (Anbieter, Stadt, Kategorie, Tier)
+        const series = state.points.filter(x => x.scope==='competitor' && x.company===company && x.city===city && x.category===category && x.tier===tier && x.status!=='review');
+        const last = series.sort((a,b)=> (a.date<b.date?1:-1))[0] || null;
+        // DEDUPE: identischer Preis -> nur Datum bestätigen, kein neuer Punkt
+        if (last && last.price === p.price) { last.date = today; continue; }
+        const np = {
           id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
           scope:'competitor', company, city,
-          location: p.location || '—',
-          category: p.category || 'Range',
-          roomType: ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : 'studio',
-          sqm: (typeof p.sqm === 'number' && p.sqm > 5 && p.sqm < 200) ? p.sqm : null,
-          tier: ['t1','t2','t3'].includes(p.tier) ? p.tier : 't1',
+          location: p.location || (last && last.location) || '—',
+          category,
+          roomType: ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : (last && last.roomType) || 'studio',
+          sqm: (typeof p.sqm === 'number' && p.sqm > 5 && p.sqm < 200) ? p.sqm : (last && last.sqm) || null,
+          tier,
           price: p.price,
           priceMax: (typeof p.priceMax === 'number' && p.priceMax > p.price) ? p.priceMax : null,
           serviceFee: null, date: today, method:'auto',
           sourceUrl: p.sourceUrl || reg.url || '', note:'Auto-Scrape', by:'Scraper'
-        });
+        };
+        if (last) {
+          const chg = p.price / last.price - 1;
+          if (Math.abs(chg) > 0.30) {
+            // AUSREISSER: nicht ins Dashboard, sondern Review
+            np.status = 'review';
+            np.note = 'Review: ' + last.price + ' → ' + p.price + ' (' + (chg>0?'+':'') + Math.round(chg*100) + '%)';
+          } else if (Math.abs(chg) >= 0.05) {
+            // ECHTE BEWEGUNG: übernehmen + Alert
+            state.alerts = state.alerts || [];
+            state.alerts.unshift({ ts:new Date().toISOString(), seen:false,
+              text: company + ' ' + city + ' · ' + category + ' ' + tier.toUpperCase() + ': ' + last.price + ' € → ' + p.price + ' € (' + (chg>0?'+':'') + Math.round(chg*100) + ' %)' });
+            if (state.alerts.length > 100) state.alerts.length = 100;
+          }
+        }
+        state.points.push(np);
         foundThisBatch++;
       }
       reg.lastScrape = { at:new Date().toISOString(), found:points.length };
@@ -85,9 +107,19 @@ module.exports = async function handler(req, res) {
     delete state.meta.scrapeDueAt;
     delete state.scrapeQueue;
     state.log = state.log || [];
+    const newAlerts = (state.alerts || []).filter(a => !a.notified);
     state.log.unshift({ ts:new Date().toISOString(), user:'Scraper', action:'Auto-Scraping abgeschlossen',
-      details: state.scrapeRun.checked + ' Quellen geprüft · ' + state.scrapeRun.found + ' Preispunkte gefunden' });
+      details: state.scrapeRun.checked + ' Quellen geprüft · ' + state.scrapeRun.found + ' neue/geänderte Preispunkte · ' + newAlerts.length + ' Preisbewegungen' });
     if (state.log.length > 500) state.log.length = 500;
+    // Optionaler Slack-Alert (Webhook-URL aus Einstellungen)
+    const hook = state.settings && state.settings.slackWebhook;
+    if (hook && /^https:\/\/hooks\.slack\.com\//.test(hook) && newAlerts.length) {
+      try {
+        await fetch(hook, { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ text: '📡 *Preisradar* — ' + newAlerts.length + ' Preisbewegung(en):\n' + newAlerts.slice(0,10).map(a=>'• '+a.text).join('\n') }) });
+      } catch (e) { /* Slack-Fehler nie den Lauf abbrechen lassen */ }
+      newAlerts.forEach(a => a.notified = true);
+    }
   }
 
   await kv.set(KEY, state);
@@ -98,8 +130,11 @@ module.exports = async function handler(req, res) {
 async function scrapeOne(apiKey, company, city, url) {
   const prompt =
 `Recherchiere die AKTUELLEN öffentlich einsehbaren Monatsmieten (möblierte Apartments/Zimmer, Long-Stay ab 1 Monat) des Anbieters "${company}" in ${city}, Deutschland.${url ? ' Offizielle Website: ' + url : ''}
+Vorgehen (in dieser Reihenfolge):
+1. ${url ? 'Rufe ZUERST die offizielle Website ab (web_fetch auf ' + url + ' und naheliegende Preis-/Zimmerseiten wie /preise, /rooms, /apartments).' : 'Suche zuerst die offizielle Website des Anbieters und rufe deren Preisseite ab.'} Preise von der Anbieterseite sind die bevorzugte Quelle (sourceUrl = Anbieterseite).
+2. Nur wenn die Anbieterseite keine konkreten Preise zeigt: Websuche nach aktuellen Inseraten (WG-Gesucht/ImmoScout/Immowelt o.ä.) als Fallback.
 Regeln:
-- Nur konkrete Euro-Beträge aus Quellen von 2026 (Anbieterseite, Inserate auf WG-Gesucht/ImmoScout/Immowelt, aktuelle Vergleichsportale).
+- Nur konkrete Euro-Beträge aus Quellen von 2026.
 - Je gefundener Zimmerkategorie EIN Eintrag. Mietdauer-Zuordnung: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate. Wenn Dauer unklar: t1.
 - roomType: "coliving" (Zimmer in geteilter Wohnung), "studio" (eigene Küche+Bad), "apartment" (größer/getrennte Räume).
 - Wenn nichts Belastbares gefunden wird: leeres Array.
@@ -111,8 +146,8 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
     headers: { 'content-type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      tools: [{ type:'web_search_20250305', name:'web_search', max_uses:3 }],
+      max_tokens: 2000,
+      tools: [{ type:'web_fetch_20250910', name:'web_fetch', max_uses:4 }, { type:'web_search_20250305', name:'web_search', max_uses:3 }],
       messages: [{ role:'user', content: prompt }]
     })
   });
