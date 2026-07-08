@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     state.scrapeQueue = (state.registry || []).map(r => r.company + '|' + r.city);
     state.scrapeRun = { startedAt:new Date().toISOString(), checked:0, found:0 };
   }
-  const batch = Math.max(1, Math.min(parseInt(body.batch) || 2, 3));
+  const batch = Math.max(1, Math.min(parseInt(body.batch) || 1, 2));
   const todo = state.scrapeQueue.splice(0, batch);
   const today = new Date().toISOString().slice(0, 10);
   let foundThisBatch = 0;
@@ -55,6 +55,7 @@ module.exports = async function handler(req, res) {
       const points = isAgg
         ? await scrapeAggregator(apiKey, company, city, reg.url)
         : await scrapeOne(apiKey, company, city, reg.url);
+      let geoBudget = 3;
       for (const p of points) {
         const realCompany = isAgg ? (p.company || '').trim() : company;
         if (isAgg && !realCompany) continue;
@@ -86,8 +87,11 @@ module.exports = async function handler(req, res) {
         };
         if (typeof p.address === 'string' && p.address.length > 5) {
           np.address = p.address.slice(0, 120);
-          const geo = await geocode(np.address, city);
-          if (geo) { np.lat = geo.lat; np.lng = geo.lng; }
+          if (geoBudget > 0) {
+            geoBudget--;
+            const geo = await geocode(np.address, city);
+            if (geo) { np.lat = geo.lat; np.lng = geo.lng; }
+          }
         }
         if (last) {
           const chg = p.price / last.price - 1;
@@ -147,7 +151,8 @@ async function geocode(address, city) {
   try {
     const q = encodeURIComponent(address + ', ' + city + ', Deutschland');
     const r = await fetch('https://nominatim.openstreetmap.org/search?q=' + q + '&format=json&limit=1',
-      { headers: { 'User-Agent': 'thebase-preisradar/1.6 (internal pricing tool)' } });
+      { headers: { 'User-Agent': 'thebase-preisradar/1.6 (internal pricing tool)' },
+        signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(4000) : undefined });
     if (!r.ok) return null;
     const j = await r.json();
     if (Array.isArray(j) && j[0]) return { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon) };
