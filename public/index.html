@@ -297,7 +297,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <button data-mtier="t3">T3 · Lang</button>
       </div>
       <div class="spacer"></div>
-      <span class="note">Marker auf Bezirks-Ebene (Adress-Genauigkeit folgt mit dem Scraper)<span class="info" data-info="Navy = The Base, Coral = Wettbewerber. Klick auf einen Marker zeigt Anbieter, Kategorien, Preisspanne und Δ fair. Position = Bezirks-Mittelpunkt, mehrere Anbieter im selben Bezirk werden leicht versetzt.">i</span></span>
+      <span class="note">Adressgenau, sobald der Scraper Adressen liefert — sonst Bezirks-Ebene<span class="info" data-info="Navy = The Base, Coral = Wettbewerber. Klick auf einen Marker zeigt Anbieter, Kategorien, Preisspanne und Δ fair. Position = Bezirks-Mittelpunkt, mehrere Anbieter im selben Bezirk werden leicht versetzt.">i</span></span>
     </div>
     <div class="card" style="padding:0;overflow:hidden">
       <div id="mapBox" style="height:560px"></div>
@@ -392,13 +392,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <div class="field"><label>Frisch bis</label><input id="set_fresh" type="number"></div>
           <div class="field"><label>Fällig ab</label><input id="set_due" type="number"></div>
         </div>
-        <h3 class="mt">Auslastung (für Empfehlungen)<span class="info" data-info="Eure eigene Auslastung je Stadt — fließt in die Handlungsempfehlungen ein (z. B. 'Einstieg unter Markt bei 92 % Auslastung → erhöhen'). Ist-Wert aktueller Monat + Forecast der nächsten Monate, in Prozent. Quelle: Cockpit/PMS, manuell gepflegt.">i</span></h3>
-        <div class="form-grid" style="grid-template-columns:repeat(4,1fr)">
-          <div class="field"><label>Berlin Ist %</label><input id="occ_B_c" type="number" min="0" max="100"></div>
-          <div class="field"><label>Berlin M+1 %</label><input id="occ_B_1" type="number" min="0" max="100"></div>
-          <div class="field"><label>München Ist %</label><input id="occ_M_c" type="number" min="0" max="100"></div>
-          <div class="field"><label>München M+1 %</label><input id="occ_M_1" type="number" min="0" max="100"></div>
-        </div>
+        <h3 class="mt">Auslastung (für Empfehlungen)<span class="info" data-info="Eure eigene Auslastung je Stadt als Monats-Zeitreihe: aktueller Monat (Ist) plus 3 Forward-Monate, in Prozent. Fließt in die Handlungsempfehlungen ein und erscheint als Linie in der Preisentwicklung. Ältere Monate bleiben als Historie erhalten. Quelle: Cockpit/PMS, Copy-Paste einmal im Monat.">i</span></h3>
+        <div id="occGrid"></div>
         <h3 class="mt">Slack-Alerts (optional)</h3>
         <div class="field"><label>Incoming-Webhook-URL</label><input id="set_slack" placeholder="https://hooks.slack.com/services/…"></div>
         <div class="note">Wenn gesetzt: Preisbewegungen &gt;5 % werden nach jedem Scrape-Lauf in den Slack-Kanal gepostet.</div>
@@ -452,7 +447,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.5.0';
+const VERSION='v1.6.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -528,6 +523,14 @@ const seedRegistry = [
   ['the Stay.Campus','München','https://findyourcoliving.com/munich','Student'],
   ['Living Hotels','München','https://findyourcoliving.com/munich','Serviced Apartments'],
 ];
+const seedAggregators=[
+  ['Wunderflats','Berlin','https://wunderflats.com/de/moeblierte-wohnungen/berlin'],
+  ['Homelike','Berlin','https://www.thehomelike.com/de/moeblierte-wohnungen/berlin'],
+  ['HousingAnywhere','Berlin','https://housinganywhere.com/s/Berlin--Germany'],
+  ['Wunderflats','München','https://wunderflats.com/de/moeblierte-wohnungen/muenchen'],
+  ['Homelike','München','https://www.thehomelike.com/de/moeblierte-wohnungen/muenchen'],
+  ['HousingAnywhere','München','https://housinganywhere.com/s/Munich--Germany'],
+];
 
 let _id = 0; const nid = ()=> 'p'+(Date.now().toString(36))+(_id++);
 
@@ -550,7 +553,8 @@ function buildSeed(){
   });
   pushComp(compBER,'Berlin'); pushComp(compMUC,'München');
   return {points:pts, lageFactors:{...seedLage},
-    registry: seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
+    registry: [...seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
+               ...seedAggregators.map(r=>({company:r[0],city:r[1],url:r[2],segment:'Aggregator',type:'aggregator'}))],
     log:[{ts:new Date().toISOString(),user:'System',action:'Seed geladen',details:pts.length+' Preispunkte, '+seedRegistry.length+' Anbieter'}],
     settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35},
     meta:{seededAt:new Date().toISOString(),version:'1.1'}};
@@ -564,6 +568,26 @@ function migrate(s){
   if(!s.log){ s.log=[]; changed=true; }
   if(!s.alerts){ s.alerts=[]; }
   if(s.settings && !s.settings.occupancy){ s.settings.occupancy={Berlin:{},'München':{}}; }
+  // Occupancy: altes 2-Felder-Format -> Monats-Zeitreihe
+  if(s.settings && s.settings.occupancy){
+    const now=new Date(); const ym=d=>d.toISOString().slice(0,7);
+    const m0=ym(now), m1=ym(new Date(now.getFullYear(),now.getMonth()+1,15));
+    ['Berlin','München'].forEach(c=>{
+      const o=s.settings.occupancy[c]||{};
+      if('current' in o || 'f1' in o){
+        const map={};
+        if(o.current!=null) map[m0]=o.current;
+        if(o.f1!=null) map[m1]=o.f1;
+        s.settings.occupancy[c]=map; changed=true;
+      }
+    });
+  }
+  // Aggregator-Quellen ergänzen, falls noch nicht vorhanden
+  seedAggregators.forEach(a=>{
+    if(!s.registry.some(r=>r.company===a[0]&&r.city===a[1])){
+      s.registry.push({company:a[0],city:a[1],url:a[2],segment:'Aggregator',type:'aggregator'}); changed=true;
+    }
+  });
   if(!s.settings) { s.settings={refSqm:{Berlin:21.5,'München':22},freshDays:21,dueDays:35}; changed=true; }
   if(s.settings.refSqm && s.settings.refSqm['München']===21.5){ s.settings.refSqm['München']=22; changed=true; }
   (s.points||[]).forEach(p=>{ if(!p.by){p.by='Seed';changed=true;} });
@@ -672,6 +696,16 @@ function daysSince(d){ return Math.floor((Date.now()-new Date(d).getTime())/8640
 function statusOf(d){ const s=STATE.settings, x=daysSince(d);
   if(x<=s.freshDays)return{c:'good',t:'frisch'}; if(x<=s.dueDays)return{c:'due',t:'bald fällig'}; return{c:'bad',t:'überfällig'}; }
 const methodTag=m=> m==='auto' ? '<span class="tag auto">🟢 AUTO</span>' : '<span class="tag manual">🟠 MANUELL</span>';
+function occMonths(){
+  const out=[]; const now=new Date();
+  for(let i=0;i<4;i++){ out.push(new Date(now.getFullYear(),now.getMonth()+i,15).toISOString().slice(0,7)); }
+  return out;
+}
+function occFor(city){
+  const map=(STATE.settings.occupancy||{})[city]||{};
+  const [m0,m1]=occMonths();
+  return {current:map[m0]??null, f1:map[m1]??null, map};
+}
 function fmtTs(iso){ const d=new Date(iso); return d.toLocaleDateString('de-DE')+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}); }
 
 /* ============================ TASKS ============================ */
@@ -697,6 +731,7 @@ function buildTasks(){
     title:'Automatisches Scraping'+(sc.due?' durchführen':''),
     sub: sc.due? sc.reason : 'Letzter Lauf vor '+sc.days+' Tag(en) — aktuell kein neuer Lauf nötig, aber jederzeit möglich'});
   STATE.registry.forEach(r=>{
+    if(r.type==='aggregator') return; // wird nur vom Scraper durchsucht
     const pts=pointsFor(r.company,r.city);
     const resting = r.checkedAt && daysSince(r.checkedAt)<=STATE.settings.freshDays;
     const kept = KEEP && KEEP.company===r.company && KEEP.city===r.city;
@@ -1021,7 +1056,7 @@ function renderCatTable(base,basis){
 function renderRecos(base,comp,basis,ei){
   const box=document.getElementById('recoBox'); if(!box)return;
   const recos=[];
-  const occ=(STATE.settings.occupancy||{})[F.city]||{};
+  const occ=occFor(F.city);
   const thin=new Set(comp.map(c=>c.company)).size<5;
   if(thin) recos.push({ico:'📉',cls:'due',txt:'<b>Dünne Datenlage:</b> nur '+new Set(comp.map(c=>c.company)).size+' Wettbewerber im Filter — Empfehlungen mit Vorsicht lesen, erst Scrape/Pflege durchführen.'});
   // Kategorien deutlich über/unter fair
@@ -1102,11 +1137,18 @@ function renderLine(){
   const cLine=dates.map(d=>{const v=avg(byDate(comp,d));return v?Math.round(v):null;});
   const ctx=document.getElementById('lineChart');
   if(lineChart)lineChart.destroy();
-  lineChart=new Chart(ctx,{type:'line',data:{labels:dates,datasets:[
-    {label:'The Base',data:bLine,borderColor:'#14285f',backgroundColor:'#14285f',tension:.25,spanGaps:true},
-    {label:'Wettbewerb',data:cLine,borderColor:'#f0786e',backgroundColor:'#f0786e',tension:.25,spanGaps:true}]},
-    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+eur(c.raw)}}},
-      scales:{y:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},x:{grid:{display:false}}}}});
+  const occMap=(STATE.settings.occupancy||{})[F.city]||{};
+  const oLine=dates.map(d=>occMap[d.slice(0,7)]??null);
+  const hasOcc=oLine.some(v=>v!=null);
+  const ds=[
+    {label:'The Base',data:bLine,borderColor:'#14285f',backgroundColor:'#14285f',tension:.25,spanGaps:true,yAxisID:'y'},
+    {label:'Wettbewerb',data:cLine,borderColor:'#f0786e',backgroundColor:'#f0786e',tension:.25,spanGaps:true,yAxisID:'y'}];
+  if(hasOcc) ds.push({label:'Auslastung',data:oLine,borderColor:'#a0c8b6',backgroundColor:'#a0c8b6',borderDash:[6,4],tension:.25,spanGaps:true,yAxisID:'y2'});
+  const scales={y:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},x:{grid:{display:false}}};
+  if(hasOcc) scales.y2={position:'right',min:0,max:100,ticks:{callback:v=>v+' %'},grid:{display:false}};
+  lineChart=new Chart(ctx,{type:'line',data:{labels:dates,datasets:ds},
+    options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.dataset.yAxisID==='y2'?c.raw+' %':eur(c.raw))}}},
+      scales}});
 }
 
 function renderDetail(list,basis){
@@ -1155,15 +1197,18 @@ function renderMap(){
   const basis=(function(){const comp=pts.filter(p=>p.scope==='competitor');return perCompanyMedian(comp,normPrice);})();
   Object.entries(groups).forEach(([k,list])=>{
     const p0=list[0];
-    const geo=GEO[p0.city+'|'+p0.location]||CITY_CENTER[p0.city];
-    const lat=geo[0]+hashJitter(p0.company)*0.012, lng=geo[1]+hashJitter(p0.company+'x')*0.018;
+    const withGeo=list.find(x=>x.lat&&x.lng);
+    let lat,lng;
+    if(withGeo){ lat=withGeo.lat; lng=withGeo.lng; }
+    else { const geo=GEO[p0.city+'|'+p0.location]||CITY_CENTER[p0.city];
+      lat=geo[0]+hashJitter(p0.company)*0.012; lng=geo[1]+hashJitter(p0.company+'x')*0.018; }
     const prices=list.map(x=>x.price);
     const mn=Math.min(...prices), mx=Math.max(...prices);
     const isBase=p0.scope==='base';
     const dAvg=basis? avg(list.map(x=>deltaFair(x,basis)).filter(v=>v!=null)) : null;
     const r=8+Math.min(10,Math.max(0,(avg(prices)-800)/120));
     const m=L.circleMarker([lat,lng],{radius:r,color:isBase?'#14285f':'#f0786e',fillColor:isBase?'#14285f':'#f0786e',fillOpacity:.75,weight:2});
-    m.bindPopup('<b>'+p0.company+'</b><br>📍 '+p0.location+'<br>'+list.length+' Kategorie(n) · '+
+    m.bindPopup('<b>'+p0.company+'</b><br>📍 '+(withGeo&&withGeo.address?withGeo.address:p0.location)+'<br>'+list.length+' Kategorie(n) · '+
       (mn===mx? eur(mn) : eur(mn)+' – '+eur(mx))+
       (dAvg!=null? '<br>Δ fair: '+(dAvg>0?'+':'')+Math.round(dAvg*100)+' %':''));
     m.addTo(MAPLAYER);
@@ -1213,6 +1258,13 @@ function renderControl(){
   const rows=STATE.registry.map(r=>{
     const pts=pointsFor(r.company,r.city);
     let st, ld='—';
+    if(r.type==='aggregator'){
+      const ls=r.lastScrape;
+      st= ls? {c:'good',t:'durchsucht ('+(ls.found||0)+' Treffer)'} : {c:'due',t:'wartet auf Scrape'};
+      return `<tr><td><span class="srclogo-wrap">${r.url?logoImg(r.url,''):''}</span><b>${r.company}</b></td><td>${r.city}</td><td class="small"><span class="tag comp">AGGREGATOR</span></td>
+      <td>${r.url?`<a href="${r.url}" target="_blank">öffnen</a>`:'–'}</td>
+      <td>–</td><td class="num">–</td><td class="small">${ls?ls.at.slice(0,10):'—'}</td><td class="status ${st.c}">${st.t}</td></tr>`;
+    }
     if(pts.length===0){ st={c:'bad',t:'Ersterfassung offen'}; b++; }
     else { ld=lastDate(pts); st=statusOf(ld); st.c==='good'?g++:st.c==='due'?d++:b++; }
     const method=pts.some(p=>p.method==='auto')?'auto':'manual';
@@ -1240,9 +1292,12 @@ function renderSettings(){
   document.getElementById('set_due').value=STATE.settings.dueDays;
   document.getElementById('set_slack').value=STATE.settings.slackWebhook||'';
   const oc=STATE.settings.occupancy||{};
-  const setv=(id,v)=>document.getElementById(id).value=(v==null?'':v);
-  setv('occ_B_c',(oc.Berlin||{}).current); setv('occ_B_1',(oc.Berlin||{}).f1);
-  setv('occ_M_c',(oc['München']||{}).current); setv('occ_M_1',(oc['München']||{}).f1);
+  const months=occMonths();
+  document.getElementById('occGrid').innerHTML=
+    '<table><thead><tr><th>Stadt</th>'+months.map((m,i)=>'<th class="right">'+m+(i===0?' (Ist)':'')+'</th>').join('')+'</tr></thead><tbody>'+
+    ['Berlin','München'].map(c=>'<tr><td><b>'+c+'</b></td>'+months.map(m=>
+      '<td class="right"><input type="number" min="0" max="100" style="width:70px;text-align:right" data-occ="'+c+'|'+m+'" value="'+(((oc[c]||{})[m])??'')+'"></td>').join('')+'</tr>').join('')+
+    '</tbody></table>';
   const keys=Object.keys(STATE.lageFactors).sort();
   document.getElementById('lageTable').innerHTML=keys.map(k=>{const[c,l]=k.split('|');
     return `<tr><td>${c}</td><td>${l}</td><td class="right"><input type="number" step="0.05" style="width:80px;text-align:right" value="${STATE.lageFactors[k]}" data-lage="${k}"></td></tr>`;}).join('');
@@ -1305,11 +1360,14 @@ function bind(){
     STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
     STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
     STATE.settings.slackWebhook=document.getElementById('set_slack').value.trim();
-    const num=id=>{const v=document.getElementById(id).value.trim();return v===''?null:parseFloat(v);};
-    STATE.settings.occupancy={
-      Berlin:{current:num('occ_B_c'),f1:num('occ_B_1')},
-      'München':{current:num('occ_M_c'),f1:num('occ_M_1')}
-    };
+    STATE.settings.occupancy=STATE.settings.occupancy||{Berlin:{},'München':{}};
+    document.querySelectorAll('[data-occ]').forEach(inp=>{
+      const [c,m]=inp.dataset.occ.split('|');
+      const v=inp.value.trim();
+      STATE.settings.occupancy[c]=STATE.settings.occupancy[c]||{};
+      if(v==='') delete STATE.settings.occupancy[c][m];
+      else STATE.settings.occupancy[c][m]=parseFloat(v);
+    });
     addLog('Einstellungen geändert','Referenz-qm / Schwellen');
     await save();renderCurrent();toast('Einstellungen gespeichert');
   };
