@@ -447,7 +447,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.6.0';
+const VERSION='v1.6.1';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -986,10 +986,11 @@ async function runScrape(){
   try{
     while(remaining>0){
       const r=await fetch('/api/scrape',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({batch:2})});
+        body:JSON.stringify({batch:1})});
       if(r.status===501){ const j=await r.json().catch(()=>({}));
         stat.textContent='⚠️ '+(j.error||'Nicht konfiguriert'); hint.classList.remove('hidden');
         btn.disabled=false; SCRAPING=false; return; }
+      if(r.status===504) throw new Error('Zeitüberschreitung bei einer Quelle — einfach erneut starten, es geht dort weiter');
       if(!r.ok) throw new Error('HTTP '+r.status);
       const j=await r.json();
       remaining=j.remaining;
