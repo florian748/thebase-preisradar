@@ -61,14 +61,14 @@ select,input,textarea{font-family:var(--body);font-size:13px;border:1px solid va
 .kpi .val{font-family:var(--head);font-size:29px;color:var(--navy);margin-top:3px}
 .kpi.hero{background:var(--navy);color:#fff;border:none}
 .kpi.hero .eyebrow{color:var(--mint)} .kpi.hero .val{color:#fff}
-.pill{display:inline-block;font-weight:700;font-size:12px;padding:3px 9px;border-radius:20px}
+.pill{display:inline-block;font-weight:700;font-size:12px;padding:3px 9px;border-radius:20px;white-space:nowrap}
 .pill.up{background:#fbe3e1;color:#c0443c} .pill.down{background:#e0efe8;color:var(--good)} .pill.flat{background:#eef0f6;color:var(--muted)}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
 th{font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#fff;background:var(--navy);position:sticky;top:0}
 tbody tr:nth-child(even){background:#fafbfe}
-td.num{text-align:right;font-variant-numeric:tabular-nums}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;white-space:nowrap}
 .tag.base{background:var(--navy);color:#fff}
 .tag.comp{background:#eef0f6;color:var(--muted)}
@@ -96,6 +96,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
 .small{font-size:12px}
+td .small,td.small{white-space:nowrap}
 .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
   background:#eef0f6;color:var(--muted);font-size:11px;font-weight:700;cursor:help;position:relative;margin-left:6px;vertical-align:middle;font-family:var(--body);text-transform:none;letter-spacing:0}
 .info::after{content:attr(data-info);position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
@@ -164,6 +165,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <button data-tab="dash" class="active">Dashboard</button>
     <button data-tab="tasks">Aufgaben<span class="tabbadge" id="taskCount">0</span></button>
     <button data-tab="data">Daten & Quellen</button>
+    <button data-tab="how">So funktioniert's</button>
     <button data-tab="settings">Einstellungen</button>
   </nav>
 
@@ -204,15 +206,6 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="spacer"></div>
     <span class="note" id="tierHint"></span>
   </div>
-    <details class="card" style="padding:12px 16px;margin-bottom:14px">
-      <summary style="cursor:pointer;font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--navy)">ⓘ So funktioniert der Preisradar</summary>
-      <div class="note" style="margin-top:10px;line-height:1.6">
-        <b>Was:</b> Das Tool vergleicht eure Long-Stay-Monatsraten mit dem Wettbewerb in Berlin und München — automatisch aktualisiert, statt Excel-Handarbeit.<br>
-        <b>Woher die Daten:</b> Ein KI-Scraper (Button im Aufgaben-Tab) prüft alle registrierten Quellen — zuerst die Anbieter-Websites, dann Portale (WG-Gesucht, ImmoScout) und Aggregatoren (Wunderflats, Homelike, HousingAnywhere). Was er nicht findet, wird als Aufgabe manuell gepflegt. Jeder Preispunkt trägt Quelle, Datum und Herkunft (🟢 AUTO / 🟠 MANUELL).<br>
-        <b>Wie verglichen wird:</b> Preise sind nur vergleichbar, wenn Lage und Größe berücksichtigt sind. Deshalb: <b>Fair-Preis = Marktbasis × Lagefaktor × Größenfaktor</b> (beide gedämpft, damit sie nicht überzeichnen — einstellbar). Δ fair zeigt je Angebot, ob es über oder unter seinem Lage-fairen Niveau liegt. Der <b>Einstiegs-Index</b> vergleicht euren günstigsten Preis mit dem günstigsten je Wettbewerber — die Zahl, die der Kunde beim Portalvergleich „fühlt".<br>
-        <b>Datenqualität:</b> Es zählt je Anbieter × Kategorie immer nur der neueste Punkt; identische Scrape-Treffer werden dedupliziert; Ausreißer (&gt;30 % Sprung) landen zur Prüfung im Aufgaben-Tab statt im Dashboard; Bewegungen 5–30 % erzeugen Alerts.
-      </div>
-    </details>
     <div class="grid g4">
       <div class="card kpi hero">
         <div class="eyebrow">Einstiegs-Index<span class="info" data-info="Vergleicht euren günstigsten Preis mit dem günstigsten Preis je Wettbewerber (Median über alle Anbieter), bereinigt um Lage und Größe. 100 = gleich teuer wie der Markt-Einstieg. 108 = euer Einstieg ist 8 % teurer. Das ist die Zahl, die der Kunde beim Vergleichen 'fühlt'.">i</span></div>
@@ -236,17 +229,6 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       </div>
     </div>
     <div id="alertBanner"></div>
-    <div class="card mt">
-      <h3>Handlungsempfehlungen<span class="info" data-info="Regelbasiert aus den aktuellen Daten abgeleitet: Kategorien deutlich über/unter Lage-fairem Preis, Einstiegs-Positionierung, offene Preisbewegungen und — falls gepflegt — eure Auslastung. Transparente Regeln, keine Blackbox. Empfehlungen ersetzen keine Pricing-Entscheidung, sie priorisieren, wo hingeschaut werden sollte.">i</span></h3>
-      <div id="recoBox"></div>
-    </div>
-    <div class="card mt">
-      <h3>The Base je Kategorie vs. Markt<span class="info" data-info="Drilldown: jede eurer Kategorien gegen ihren Lage-fairen Preis (Marktbasis × Lage × Größe). Zeigt, welches Produkt euer Premium trägt und wo ihr unter Markt liegt.">i</span></h3>
-      <table><thead><tr><th>Kategorie</th><th class="right">Preis</th><th class="right">Fair-Preis</th><th class="right">Δ fair</th></tr></thead>
-      <tbody id="catTable"></tbody></table>
-    </div>
-
-
     <div class="grid g2 mt">
       <div class="card">
         <h3>Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand.">i</span></h3>
@@ -262,6 +244,23 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="note mt" id="normNote"></div>
       </div>
     </div>
+    <div class="card mt" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px 0"><h3>Karte<span class="info" data-info="Alle aktuellen Angebote im Filter. Navy = The Base, Coral = Wettbewerber, Markergröße = Preisniveau. Adressgenau, sobald der Scraper Adressen liefert — sonst Bezirks-Mittelpunkt. Klick auf Marker für Details.">i</span></h3></div>
+      <div id="mapBox" style="height:420px;margin-top:10px"></div>
+    </div>
+    <div class="grid g2 mt" style="grid-template-columns:1fr 1fr">
+<div class="card">
+      <h3>Handlungsempfehlungen<span class="info" data-info="Regelbasiert aus den aktuellen Daten abgeleitet: Kategorien deutlich über/unter Lage-fairem Preis, Einstiegs-Positionierung, offene Preisbewegungen und — falls gepflegt — eure Auslastung. Transparente Regeln, keine Blackbox. Empfehlungen ersetzen keine Pricing-Entscheidung, sie priorisieren, wo hingeschaut werden sollte.">i</span></h3>
+      <div id="recoBox"></div>
+    </div>
+<div class="card">
+      <h3>The Base je Kategorie vs. Markt<span class="info" data-info="Drilldown: jede eurer Kategorien gegen ihren Lage-fairen Preis (Marktbasis × Lage × Größe). Zeigt, welches Produkt euer Premium trägt und wo ihr unter Markt liegt.">i</span></h3>
+      <table><thead><tr><th>Kategorie</th><th class="right">Preis</th><th class="right">Fair-Preis</th><th class="right">Δ fair</th></tr></thead>
+      <tbody id="catTable"></tbody></table>
+    </div>
+    </div>
+
+
 
     <div class="card mt">
       <h3>Preis vs. Lage<span class="info" data-info="Jeder Punkt = ein Angebot. Rechts = bessere Lage, oben = teurer. Die Mint-Linie ist der Lage-faire Preis: Punkte darüber sind teurer, als ihre Lage rechtfertigt — darunter günstiger.">i</span></h3>
@@ -270,10 +269,6 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="legend"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span><span><span class="sw" style="background:var(--mint)"></span>Fair-Preis-Linie</span></div>
     </div>
 
-    <div class="card mt" style="padding:0;overflow:hidden">
-      <div style="padding:14px 16px 0"><h3>Karte<span class="info" data-info="Alle aktuellen Angebote im Filter. Navy = The Base, Coral = Wettbewerber, Markergröße = Preisniveau. Adressgenau, sobald der Scraper Adressen liefert — sonst Bezirks-Mittelpunkt. Klick auf Marker für Details.">i</span></h3></div>
-      <div id="mapBox" style="height:420px;margin-top:10px"></div>
-    </div>
 
     <div class="card mt">
       <h3>Preisentwicklung (Zeitreihe)<span class="info" data-info="Median je Erfassungsdatum. Zeigt, wie sich The Base und der Markt über die Zeit bewegen — jede Scrape- oder Pflegerunde erzeugt neue Datenpunkte.">i</span></h3>
@@ -299,6 +294,10 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- ENTRY -->
   <section id="tab-data" class="hidden">
+    <div class="card" id="lastRunCard" style="display:none">
+      <h3>Letzter Scrape-Lauf<span class="info" data-info="Alles, was der jüngste Lauf gebracht hat: neue und geänderte Preispunkte, entdeckte Anbieter, Bewegungen. Verschwindet nicht — zeigt immer den letzten Lauf.">i</span> <span class="small" id="lastRunMeta"></span></h3>
+      <div id="lastRunBody"></div>
+    </div>
     <div class="banner">Freie Erfassung — für <b>neue Anbieter/Kategorien</b>, die (noch) nicht als Aufgabe angelegt sind. Für die laufende Pflege: Tab <b>Aufgaben</b>.</div>
     <div class="card">
       <h3 id="formTitle">Neuer Preispunkt</h3>
@@ -366,6 +365,78 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
     </section>
 
+
+  <!-- HOW -->
+  <section id="tab-how" class="hidden">
+    <div class="card">
+      <h3>Was macht der Preisradar?</h3>
+      <div class="note mt" style="line-height:1.65;max-width:820px">Der Preisradar beantwortet eine Frage: <b>Wo stehen unsere Long-Stay-Preise im Vergleich zum Markt — fair verglichen, nicht nur nominal?</b> Er ersetzt die manuelle Excel-Analyse durch automatische Datensammlung, ein Lage-/Größen-bereinigtes Vergleichsmodell und konkrete Handlungsempfehlungen.</div>
+    </div>
+
+    <div class="card mt">
+      <h3>1 · Woher kommen die Daten?</h3>
+      <svg viewBox="0 0 860 190" style="width:100%;max-width:860px;display:block;margin:14px 0">
+        <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6a7590"/></marker></defs>
+        <rect x="10" y="15" width="170" height="44" rx="8" fill="#e8f0fa"/><text x="95" y="34" text-anchor="middle" font-size="12" font-weight="700" fill="#14285f">Anbieter-Websites</text><text x="95" y="49" text-anchor="middle" font-size="10" fill="#6a7590">Habyt, Vonder, …</text>
+        <rect x="10" y="73" width="170" height="44" rx="8" fill="#e8f0fa"/><text x="95" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#14285f">Portale & Inserate</text><text x="95" y="107" text-anchor="middle" font-size="10" fill="#6a7590">WG-Gesucht, ImmoScout</text>
+        <rect x="10" y="131" width="170" height="44" rx="8" fill="#e8f0fa"/><text x="95" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="#14285f">Aggregatoren</text><text x="95" y="165" text-anchor="middle" font-size="10" fill="#6a7590">Wunderflats, Homelike, HA</text>
+        <line x1="180" y1="37" x2="255" y2="85" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="180" y1="95" x2="255" y2="95" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="180" y1="153" x2="255" y2="105" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="260" y="65" width="150" height="60" rx="8" fill="#14285f"/><text x="335" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">KI-Scraper</text><text x="335" y="106" text-anchor="middle" font-size="10" fill="#a0c8b6">Button · liest & extrahiert</text>
+        <rect x="260" y="140" width="150" height="40" rx="8" fill="#fdf1dd"/><text x="335" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#a9791f">Manuelle Pflege</text><text x="335" y="172" text-anchor="middle" font-size="9" fill="#a9791f">Aufgaben-Tab · was der Scraper nicht findet</text>
+        <line x1="410" y1="95" x2="480" y2="95" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <line x1="410" y1="160" x2="480" y2="110" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="485" y="65" width="170" height="60" rx="8" fill="#e0efe8"/><text x="570" y="86" text-anchor="middle" font-size="12" font-weight="700" fill="#00382f">Datenqualität</text><text x="570" y="101" text-anchor="middle" font-size="9" fill="#3f9d7a">Dedupe · Ausreißer-Review</text><text x="570" y="114" text-anchor="middle" font-size="9" fill="#3f9d7a">nur neuester Punkt je Serie zählt</text>
+        <line x1="655" y1="95" x2="720" y2="95" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar)"/>
+        <rect x="725" y="65" width="125" height="60" rx="8" fill="#f0786e"/><text x="787" y="90" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Dashboard</text><text x="787" y="106" text-anchor="middle" font-size="10" fill="#fff">+ Alerts & Empfehlungen</text>
+      </svg>
+      <div class="note" style="max-width:820px">Der Scraper (Aufgaben-Tab, Schritt 1) prüft alle registrierten Quellen: zuerst die Anbieter-Website, dann Portale als Fallback. Aggregatoren werden durchsucht und Angebote dem <b>echten Betreiber</b> zugeordnet — dabei entdeckt das Tool auch neue Wettbewerber. Jeder Preispunkt trägt Quelle, Datum und Herkunft (🟢 AUTO / 🟠 MANUELL). Was nirgends öffentlich steht, wird als Aufgabe manuell gepflegt oder per Anfrage-Vorlage erfragt.</div>
+    </div>
+
+    <div class="card mt">
+      <h3>2 · Wie wird fair verglichen?</h3>
+      <svg viewBox="0 0 860 150" style="width:100%;max-width:860px;display:block;margin:14px 0">
+        <text x="20" y="45" font-size="15" font-weight="700" fill="#14285f" font-family="Georgia">Fair-Preis</text>
+        <text x="110" y="45" font-size="15" fill="#6a7590">=</text>
+        <rect x="130" y="22" width="160" height="38" rx="8" fill="#e8f0fa"/><text x="210" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#14285f">Marktbasis</text><text x="210" y="53" text-anchor="middle" font-size="9" fill="#6a7590">Median je Anbieter, bereinigt</text>
+        <text x="300" y="45" font-size="15" fill="#6a7590">×</text>
+        <rect x="315" y="22" width="160" height="38" rx="8" fill="#e0efe8"/><text x="395" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#00382f">Lagefaktor</text><text x="395" y="53" text-anchor="middle" font-size="9" fill="#3f9d7a">gedämpft: 1,3 wirkt als +15 %</text>
+        <text x="485" y="45" font-size="15" fill="#6a7590">×</text>
+        <rect x="500" y="22" width="160" height="38" rx="8" fill="#fdf1dd"/><text x="580" y="40" text-anchor="middle" font-size="11" font-weight="700" fill="#a9791f">Größenfaktor</text><text x="580" y="53" text-anchor="middle" font-size="9" fill="#a9791f">gedämpft: qm wirken unterproportional</text>
+        <text x="30" y="105" font-size="12" fill="#0d1730" font-weight="700">Beispiel:</text>
+        <text x="30" y="125" font-size="12" fill="#6a7590">Angebot in Pankow € 1.300 vs. Angebot in Mitte € 1.500 — nominal 200 € Unterschied. Gegen ihren jeweiligen Fair-Preis gestellt kann Pankow <tspan font-weight="700" fill="#3f9d7a">fair</tspan> und Mitte <tspan font-weight="700" fill="#c0443c">+7 % zu teuer</tspan> sein.</text>
+      </svg>
+      <div class="note" style="max-width:820px"><b>Δ fair</b> zeigt je Angebot die Abweichung vom Lage-fairen Preis. Der <b>Einstiegs-Index</b> (Haupt-KPI) vergleicht euer günstigstes Angebot mit dem günstigsten je Wettbewerber — die Zahl, die der Kunde beim Portalvergleich „fühlt". Die Dämpfung ist in den Einstellungen kalibrierbar; die Lagefaktoren folgen der City-Tier-Logik des Standortanalyse-Agenten.</div>
+    </div>
+
+    <div class="card mt">
+      <h3>3 · Wie arbeite ich damit? (Workflow)</h3>
+      <svg viewBox="0 0 860 90" style="width:100%;max-width:860px;display:block;margin:14px 0">
+        <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#6a7590"/></marker></defs>
+        <rect x="10" y="20" width="185" height="50" rx="8" fill="#14285f"/><text x="102" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">1 · Scrapen</text><text x="102" y="58" text-anchor="middle" font-size="9" fill="#a0c8b6">Aufgaben → Jetzt scrapen (14-täglich)</text>
+        <line x1="195" y1="45" x2="225" y2="45" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <rect x="230" y="20" width="185" height="50" rx="8" fill="#e0605a"/><text x="322" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">2 · Reviews & Pflege</text><text x="322" y="58" text-anchor="middle" font-size="9" fill="#fff">Ausreißer prüfen · Lücken füllen</text>
+        <line x1="415" y1="45" x2="445" y2="45" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <rect x="450" y="20" width="185" height="50" rx="8" fill="#a0c8b6"/><text x="542" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#00382f">3 · Dashboard lesen</text><text x="542" y="58" text-anchor="middle" font-size="9" fill="#00382f">Index · Δ fair je Kategorie · Karte</text>
+        <line x1="635" y1="45" x2="665" y2="45" stroke="#6a7590" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <rect x="670" y="20" width="180" height="50" rx="8" fill="#f0786e"/><text x="760" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">4 · Handeln</text><text x="760" y="58" text-anchor="middle" font-size="9" fill="#fff">Empfehlungen · Pricing-Entscheidung</text>
+      </svg>
+      <div class="note" style="max-width:820px">Auslastung (Einstellungen) einmal im Monat aktualisieren — dann kombinieren die Empfehlungen Preis-Position × Belegung. Alerts melden Preisbewegungen &gt;5 % automatisch (optional in Slack). Die Steuerung im Daten-Tab zeigt jederzeit, welche Quelle wie frisch ist und wer was wann gepflegt hat.</div>
+    </div>
+
+    <div class="card mt">
+      <h3>Begriffe in 10 Sekunden</h3>
+      <table style="max-width:820px"><tbody>
+        <tr><td style="width:200px"><b>Einstiegs-Index</b></td><td class="small">Euer günstigster Preis vs. Markt-Einstieg, bereinigt. 100 = Marktniveau, 108 = 8 % teurer.</td></tr>
+        <tr><td><b>Fair-Preis / Δ fair</b></td><td class="small">Was ein Angebot in dieser Lage/Größe kosten „dürfte" — und wie weit es davon abweicht.</td></tr>
+        <tr><td><b>Tier T1/T2/T3</b></td><td class="small">Mietdauer-Staffel: ~1 Monat / ~3 Monate / ~6+ Monate.</td></tr>
+        <tr><td><b>🟢 AUTO / 🟠 MANUELL</b></td><td class="small">Herkunft des Preispunkts: Scraper oder Handpflege — beides mit Quelle & Datum.</td></tr>
+        <tr><td><b>Review</b></td><td class="small">Auto-Preis mit &gt;30 % Sprung — wartet im Aufgaben-Tab auf Freigabe, zählt bis dahin nicht.</td></tr>
+        <tr><td><b>Marktbasis</b></td><td class="small">Lagebereinigter Referenzpreis des Wettbewerbs (Median, jeder Anbieter zählt gleich).</td></tr>
+      </tbody></table>
+    </div>
+  </section>
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="hidden">
@@ -447,7 +518,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.7.0';
+const VERSION='v1.8.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -556,7 +627,7 @@ function buildSeed(){
     registry: [...seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
                ...seedAggregators.map(r=>({company:r[0],city:r[1],url:r[2],segment:'Aggregator',type:'aggregator'}))],
     log:[{ts:new Date().toISOString(),user:'System',action:'Seed geladen',details:pts.length+' Preispunkte, '+seedRegistry.length+' Anbieter'}],
-    settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35, damp:{lage:0.5,size:0.7}, baseGeo:{}},
+    settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35, damp:{lage:0.5,size:0.7}, baseGeo:{Berlin:{address:'Pestalozzistraße 5-8, 13187 Berlin'},'München':{address:'Schätzweg 1-3, 80935 München'}}},
     meta:{seededAt:new Date().toISOString(),version:'1.1'}};
 }
 
@@ -570,6 +641,11 @@ function migrate(s){
   if(s.settings && !s.settings.occupancy){ s.settings.occupancy={Berlin:{},'München':{}}; }
   if(s.settings && !s.settings.damp){ s.settings.damp={lage:0.5,size:0.7}; changed=true; }
   if(s.settings && !s.settings.baseGeo){ s.settings.baseGeo={}; }
+  if(s.settings){
+    s.settings.baseGeo=s.settings.baseGeo||{};
+    if(!(s.settings.baseGeo.Berlin&&s.settings.baseGeo.Berlin.address)) s.settings.baseGeo.Berlin={address:'Pestalozzistraße 5-8, 13187 Berlin'};
+    if(!(s.settings.baseGeo['München']&&s.settings.baseGeo['München'].address)) s.settings.baseGeo['München']={address:'Schätzweg 1-3, 80935 München'};
+  }
   // Occupancy: altes 2-Felder-Format -> Monats-Zeitreihe
   if(s.settings && s.settings.occupancy){
     const now=new Date(); const ym=d=>d.toISOString().slice(0,7);
@@ -1262,6 +1338,33 @@ function clearForm(){['f_company','f_location','f_category','f_sqm','f_price','f
   editId=null;document.getElementById('editHint').textContent='';document.getElementById('formTitle').textContent='Neuer Preispunkt';document.getElementById('f_date').value=TODAY;}
 
 /* ============================ CONTROL ============================ */
+function renderLastRun(){
+  const card=document.getElementById('lastRunCard'); if(!card)return;
+  const ls=STATE.meta&&STATE.meta.lastScrapeAt;
+  if(!ls){ card.style.display='none'; return; }
+  card.style.display='';
+  const runDay=ls.slice(0,10);
+  document.getElementById('lastRunMeta').textContent='· '+fmtTs(ls);
+  const pts=STATE.points.filter(p=>p.method==='auto'&&p.date===runDay);
+  const disc=(STATE.log||[]).filter(l=>l.action==='Neuer Anbieter entdeckt'&&l.ts.slice(0,10)===runDay);
+  const revs=pts.filter(p=>p.status==='review');
+  let html='';
+  html+='<div class="small" style="margin-bottom:8px"><b>'+pts.length+'</b> Preispunkte erfasst/aktualisiert';
+  if(disc.length) html+=' · <b>'+disc.length+'</b> neue Anbieter entdeckt';
+  if(revs.length) html+=' · <b>'+revs.length+'</b> zur Prüfung (Aufgaben-Tab)';
+  html+='</div>';
+  if(disc.length) html+='<div class="small" style="margin-bottom:8px">🔎 '+disc.map(d=>d.details).join(' · ')+'</div>';
+  if(pts.length){
+    html+='<div style="overflow:auto;max-height:280px"><table><thead><tr><th>Anbieter</th><th>Kategorie</th><th>Stadt</th><th>Tier</th><th class="right">€</th><th>Herkunft</th></tr></thead><tbody>'+
+      pts.sort((a,b)=>a.company.localeCompare(b.company)).map(p=>
+        '<tr><td><b>'+p.company+'</b></td><td>'+p.category+'</td><td>'+p.city+'</td><td>'+p.tier.toUpperCase()+'</td><td class="num">'+eur(p.price)+'</td><td class="small">'+(p.note||'Auto')+(p.status==='review'?' · <span class="status bad">REVIEW</span>':'')+'</td></tr>').join('')+
+      '</tbody></table></div>';
+  } else {
+    html+='<div class="note">Keine neuen Punkte in diesem Lauf (alles bestätigt/dedupliziert oder keine Treffer).</div>';
+  }
+  document.getElementById('lastRunBody').innerHTML=html;
+}
+
 function renderControl(){
   let g=0,d=0,b=0;
   const rows=STATE.registry.map(r=>{
@@ -1330,13 +1433,13 @@ function renderSettings(){
 }
 
 /* ============================ RENDER ============================ */
-function renderCurrent(){ renderTasks(); renderDash(); renderAll(); refreshLists(); renderControl(); renderSettings(); }
+function renderCurrent(){ renderTasks(); renderDash(); renderAll(); refreshLists(); renderControl(); renderLastRun(); renderSettings(); }
 
 /* ============================ EVENTS ============================ */
 function bind(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    ['tasks','dash','data','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+    ['tasks','dash','data','how','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
     if(b.dataset.tab==='dash') renderMap();
   });
   const grp=(id,key)=>document.getElementById(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -1427,7 +1530,23 @@ function exportCsv(){
 function download(name,content){const b=new Blob([content],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
 
 /* ============================ INIT ============================ */
-(async function(){ document.getElementById('verTag').textContent=VERSION; document.getElementById('verSettings').textContent=VERSION; bind(); await loadState(); ensureUser(); renderCurrent(); renderMap(); })();
+(async function(){ document.getElementById('verTag').textContent=VERSION; document.getElementById('verSettings').textContent=VERSION; bind(); await loadState(); ensureUser(); renderCurrent(); renderMap(); autoGeocodeBase(); })();
+async function autoGeocodeBase(){
+  const bgs=STATE.settings&&STATE.settings.baseGeo; if(!bgs)return;
+  let did=false;
+  for(const c of ['Berlin','München']){
+    const g=bgs[c];
+    if(g&&g.address&&!g.lat){
+      try{
+        const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(g.address)+'&format=json&limit=1');
+        const j=await r.json();
+        if(j&&j[0]){ g.lat=parseFloat(j[0].lat); g.lng=parseFloat(j[0].lon); did=true; }
+      }catch(e){}
+      await new Promise(res=>setTimeout(res,1100));
+    }
+  }
+  if(did){ await save(true); renderMap(); }
+}
 </script>
 </body>
 </html>
