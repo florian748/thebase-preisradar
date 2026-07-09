@@ -4,6 +4,18 @@
 
 const KEY = 'preisradar:state:v1';
 
+// Namens-Normalisierung für Anbieter-Matching (Neonwood == Neon Wood, Home and Co == Home & Co)
+function normName(s){ return String(s||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]/g,''); }
+const OWN_BRAND = /the\s*base/i; // eigene Marke nie als Wettbewerber anlegen
+
+// roomType anhand Kategorie-Keywords plausibilisieren
+function fixRoomType(category, roomType){
+  const c = String(category||'').toLowerCase();
+  if (/\bwg\b|privatzimmer|private room|zimmer in|shared|mitbewohner/.test(c)) return 'coliving';
+  if (/studio/.test(c) && roomType==='coliving') return 'studio';
+  return roomType;
+}
+
 module.exports = async function handler(req, res) {
   let kv = null;
   try {
@@ -54,11 +66,22 @@ module.exports = async function handler(req, res) {
       const isAgg = reg.type === 'aggregator';
       const points = isAgg
         ? await scrapeAggregator(apiKey, company, city, reg.url)
-        : await scrapeOne(apiKey, company, city, reg.url);
+        : await scrapeOne(apiKey, company, city, reg.url, reg.segment);
       let geoBudget = 2;
       for (const p of points) {
-        const realCompany = isAgg ? (p.company || '').trim() : company;
+        let realCompany = isAgg ? (p.company || '').trim() : company;
         if (isAgg && !realCompany) continue;
+        // Eigene Marke: nie als Wettbewerber erfassen
+        if (isAgg && OWN_BRAND.test(realCompany)) {
+          state.log = state.log || [];
+          state.log.unshift({ ts:new Date().toISOString(), user:'Scraper', action:'Eigenes Angebot übersprungen', details: realCompany + ' (' + city + ') via ' + company });
+          continue;
+        }
+        // Namens-Match gegen bestehende Registry (normalisiert) -> kanonischen Namen verwenden
+        if (isAgg) {
+          const known = (state.registry || []).find(r2 => r2.city === city && r2.type !== 'aggregator' && normName(r2.company) === normName(realCompany));
+          if (known) realCompany = known.company;
+        }
         // Discovery: unbekannten Anbieter automatisch registrieren (ohne manuelle Tasks zu erzeugen — er hat ja sofort Punkte)
         if (isAgg && !(state.registry || []).some(r2 => r2.company === realCompany && r2.city === city)) {
           state.registry.push({ company: realCompany, city, url: '', segment: 'Entdeckt via ' + company });
@@ -77,7 +100,7 @@ module.exports = async function handler(req, res) {
           scope:'competitor', company: realCompany, city,
           location: p.location || (last && last.location) || '—',
           category,
-          roomType: ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : (last && last.roomType) || 'studio',
+          roomType: fixRoomType(p.category, ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : (last && last.roomType) || 'studio'),
           sqm: (typeof p.sqm === 'number' && p.sqm > 5 && p.sqm < 200) ? p.sqm : (last && last.sqm) || null,
           tier,
           tierAssumed: p.tierKnown===false ? true : undefined,
@@ -163,10 +186,23 @@ async function geocode(address, city) {
 }
 
 // ---- Ein Anbieter: Claude mit Web-Search recherchiert aktuelle Monatspreise ----
-async function scrapeOne(apiKey, company, city, url) {
+function bookingWindow(){
+  const now=new Date();
+  const s=new Date(now.getFullYear(), now.getMonth()+1, 1);
+  const e=new Date(s.getTime()+28*86400000);
+  const f=d=>d.toISOString().slice(0,10);
+  return {ci:f(s), co:f(e)};
+}
+async function scrapeOne(apiKey, company, city, url, segment) {
+  const isServiced = /serviced/i.test(segment||'');
+  const bw = bookingWindow();
   const prompt =
 `Recherchiere die AKTUELLEN öffentlich einsehbaren Monatsmieten (möblierte Apartments/Zimmer, Long-Stay ab 1 Monat) des Anbieters "${company}" in ${city}, Deutschland.${url ? ' Offizielle Website: ' + url : ''}
-Hinweis für Serviced-Apartment-Anbieter (Stayery, Limehome, Numa, JOYN, SMARTments u. ä.): Diese zeigen oft dynamische Tagespreise — gesucht ist die LONGSTAY-/Monatsrate (Aufenthalt ab 28–30 Nächten, oft mit Langzeitrabatt). Rechne notfalls: beworbene Longstay-Tagesrate × 30.
+${isServiced ? `WICHTIG — dieser Anbieter ist ein Serviced-Apartment-Betreiber mit dynamischen Tagespreisen. Öffentliche Monatsraten stehen selten auf der Website. Vorgehen:
+1. Rufe die Booking.com-Suche für einen 28-Nächte-Aufenthalt ab: https://www.booking.com/searchresults.de.html?ss=${encodeURIComponent(company + ' ' + city)}&checkin=${bw.ci}&checkout=${bw.co}&group_adults=1
+2. Lies den GESAMTPREIS für die 28 Nächte je Zimmertyp und rechne auf die Monatsrate um: Gesamtpreis / 28 × 30. Das ist der t1-Preis (tierKnown:true).
+3. Fallback: HRS oder die eigene Buchungsseite mit denselben Daten.
+Nur wenn beides scheitert: leeres Array.` : 'Hinweis: Bei dynamischen Tagespreisen gilt die LONGSTAY-/Monatsrate (ab 28–30 Nächte). Notfalls: Longstay-Tagesrate × 30.'}
 Vorgehen (in dieser Reihenfolge):
 1. ${url ? 'Rufe ZUERST die offizielle Website ab (web_fetch auf ' + url + ' und naheliegende Preis-/Zimmerseiten wie /preise, /rooms, /apartments).' : 'Suche zuerst die offizielle Website des Anbieters und rufe deren Preisseite ab.'} Preise von der Anbieterseite sind die bevorzugte Quelle (sourceUrl = Anbieterseite).
 2. Nur wenn die Anbieterseite keine konkreten Preise zeigt: Websuche nach aktuellen Inseraten (WG-Gesucht/ImmoScout/Immowelt o.ä.) als Fallback.
