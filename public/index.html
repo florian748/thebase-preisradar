@@ -228,11 +228,18 @@ td .small,td.small{white-space:nowrap}
         <div class="small"><span id="kDeltaPill" class="pill flat">–</span></div>
       </div>
     </div>
+    <div class="note" id="dataBasis" style="margin-top:8px"></div>
     <div id="alertBanner"></div>
     <div class="grid g2 mt">
       <div class="card">
-        <h3>Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand.">i</span></h3>
-        <div class="chartbox"><canvas id="barChart"></canvas></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <h3 style="margin:0">Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand. Kompakt = je Wettbewerber ein Balken (Median).">i</span></h3>
+          <div class="grp" id="barModeGrp" style="display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto">
+            <button data-barmode="detail" class="active" style="background:var(--navy);color:#fff;border:none;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Detail</button>
+            <button data-barmode="compact" style="background:none;border:none;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">Kompakt</button>
+          </div>
+        </div>
+        <div class="chartbox" id="barBox" style="height:auto"><canvas id="barChart"></canvas></div>
         <div class="legend">
           <span><span class="sw" style="background:var(--navy)"></span>The Base</span>
           <span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span>
@@ -262,20 +269,22 @@ td .small,td.small{white-space:nowrap}
 
 
 
-    <div class="card mt">
+
+
+
+    <div class="grid g2 mt" style="grid-template-columns:1fr 1fr">
+<div class="card">
       <h3>Preis vs. Lage<span class="info" data-info="Jeder Punkt = ein Angebot. Rechts = bessere Lage, oben = teurer. Die Mint-Linie ist der Lage-faire Preis: Punkte darüber sind teurer, als ihre Lage rechtfertigt — darunter günstiger.">i</span></h3>
       <div class="chartbox"><canvas id="scatterChart"></canvas></div>
       <div class="note mt">Jeder Punkt = ein aktuelles Angebot. Linie = Lage-fairer Preis (Marktbasis × Lagefaktor, Referenzgröße). Über der Linie: teurer als die Lage rechtfertigt. Δ im Tooltip.</div>
       <div class="legend"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span><span><span class="sw" style="background:var(--mint)"></span>Fair-Preis-Linie</span></div>
     </div>
-
-
-    <div class="card mt">
+<div class="card">
       <h3>Preisentwicklung (Zeitreihe)<span class="info" data-info="Median je Erfassungsdatum. Zeigt, wie sich The Base und der Markt über die Zeit bewegen — jede Scrape- oder Pflegerunde erzeugt neue Datenpunkte.">i</span></h3>
       <div class="chartbox"><canvas id="lineChart"></canvas></div>
       <div class="note mt">Ø je Erfassungsdatum · The Base vs. Wettbewerb · aktuelle Filter.</div>
     </div>
-
+    </div>
     <div class="card mt">
       <h3>Detailtabelle<span class="info" data-info="Alle aktuellen Preispunkte im Filter. Δ fair = Abweichung vom Lage-fairen Preis. 🟢 AUTO = per Scraping gefunden, 🟠 MANUELL = von Hand erfasst. Quelle-Link führt zum Original.">i</span></h3>
       <div style="overflow:auto;max-height:460px">
@@ -452,6 +461,7 @@ td .small,td.small{white-space:nowrap}
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="field"><label>Frisch bis</label><input id="set_fresh" type="number"></div>
           <div class="field"><label>Fällig ab</label><input id="set_due" type="number"></div>
+          <div class="field"><label>KPI-Ausschluss ab (Tage)</label><input id="set_stale" type="number"></div>
         </div>
         <h3 class="mt">Modell-Kalibrierung<span class="info" data-info="Wie stark Lage und Größe auf den Fair-Preis wirken. 0 = gar nicht, 1 = voll (Faktor 1,3 wirkt als +30 %). Empfehlung: Lage 0,5 (Faktor 1,3 wirkt als +15 %), Größe 0,7. Nach Änderung rechnen alle Fair-Preise sofort neu.">i</span></h3>
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
@@ -518,7 +528,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.8.0';
+const VERSION='v1.9.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -737,8 +747,10 @@ function refSqm(city){ return STATE.settings.refSqm[city]||21.5; }
 function sizeFactor(p){ if(!p.sqm) return 1.0; const raw=p.sqm/refSqm(p.city); return 1+damp().size*(raw-1); }
 function normPrice(p){ const f=sizeFactor(p)*lageOf(p); return f>0? p.price/f : p.price; }
 function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
+function staleDays(){ return STATE.settings.staleDays||90; }
 function filtered(scope){
   return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier && p.status!=='review'
+    && (p.scope==='base' || daysSince(p.date)<=staleDays())
     && (scope? p.scope===scope : true)
     && (F.type==='all' || p.roomType===F.type));
 }
@@ -1116,6 +1128,10 @@ function renderDash(){
   document.getElementById('kIndexSub').innerHTML = !ei? 'zu wenig Daten' :
     'Günstigstes Angebot: '+eur(ei.rawPrice)+' ('+ei.rawCat+') · Vergleich lage-/größenbereinigt über '+ei.n+' Anbieter · '+
     (ei.idx>102? '<b>+'+(ei.idx-100)+' % teurer</b>' : ei.idx<98? '<b>'+(ei.idx-100)+' % günstiger</b>' : '<b>auf Marktniveau</b>');
+  {const nA=new Set(comp.map(c=>c.company)).size;
+   const fresh=comp.filter(p=>daysSince(p.date)<=STATE.settings.freshDays).length;
+   const pct=comp.length?Math.round(fresh/comp.length*100):0;
+   document.getElementById('dataBasis').innerHTML='Datenbasis: <b>'+nA+' Anbieter</b> · '+comp.length+' Angebote · <b>'+pct+' % frisch</b> (≤ '+STATE.settings.freshDays+' T) · Punkte älter als '+staleDays()+' Tage fließen nicht in KPIs ein';}
   renderCatTable(base,basis);
   renderRecos(base,comp,basis,ei);
   const st=document.getElementById('statTable');
@@ -1197,28 +1213,41 @@ function renderScatter(base,comp,basis){
     y:{title:{display:true,text:'Rohpreis €/Monat'},ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}}}}});
 }
 
+let BARMODE='detail';
 function renderBar(base,comp){
   const labels=[], vals=[], colors=[], pts=[];
   const push=(p,label,col)=>{labels.push(label);vals.push(Math.round(valOf(p)));colors.push(col);pts.push(p);};
-  base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,p.category,'#14285f'));
-  comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,p.company+(p.category!=='Range'?' · '+p.category:''),'#f0786e'));
+  base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,'★ '+p.category,'#14285f'));
+  if(BARMODE==='compact'){
+    const by={};
+    comp.forEach(p=>{(by[p.company]=by[p.company]||[]).push(p);});
+    Object.entries(by).map(([co,list])=>({co,med:median(list.map(valOf)),list}))
+      .sort((a,b)=>a.med-b.med)
+      .forEach(g=>push({...g.list[0],_agg:g.list.length},g.co+(g.list.length>1?' ('+g.list.length+')':''),'#f0786e'));
+  } else {
+    comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,p.company+(p.category!=='Range'?' · '+p.category:''),'#f0786e'));
+  }
+  // Höhe dynamisch: alle Labels immer sichtbar
+  const box=document.getElementById('barBox');
+  if(box) box.style.height=Math.max(220, labels.length*24+50)+'px';
   const ctx=document.getElementById('barChart');
   if(barChart)barChart.destroy();
   barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{
+    options:{maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{
       label:c=>eur(c.raw),
       afterLabel:c=>{const p=pts[c.dataIndex]; if(!p)return '';
+        if(p._agg) return p._agg+' Kategorien · Median';
         return '📍 '+p.location+(p.sqm?' · '+p.sqm+' qm':'')+'\nStand '+p.date+(p.method==='auto'?' · Auto':' · Manuell');}
     }}},
-      scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+      scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11},autoSkip:false},grid:{display:false}}}}});
 }
 
 function renderLine(){
   const base=filtered('base'), comp=filtered('competitor');
   const dates=[...new Set([...base,...comp].map(p=>p.date))].sort();
   const byDate=(arr,d)=>arr.filter(p=>p.date===d).map(valOf);
-  const bLine=dates.map(d=>{const v=avg(byDate(base,d));return v?Math.round(v):null;});
-  const cLine=dates.map(d=>{const v=avg(byDate(comp,d));return v?Math.round(v):null;});
+  const bLine=dates.map(d=>{const v=median(byDate(base,d));return v?Math.round(v):null;});
+  const cLine=dates.map(d=>{const v=median(byDate(comp,d));return v?Math.round(v):null;});
   const ctx=document.getElementById('lineChart');
   if(lineChart)lineChart.destroy();
   const occMap=(STATE.settings.occupancy||{})[F.city]||{};
@@ -1313,7 +1342,7 @@ function renderAll(){
   tb.innerHTML=list.map(p=>`<tr>
     <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.scope==='base'?'Base':'Wettb.'}</span></td>
     <td>${p.company}</td><td>${p.city}</td><td>${p.location}</td><td>${p.category}</td>
-    <td>${p.tier.toUpperCase()}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
+    <td>${p.tier.toUpperCase()}${p.tierAssumed?'<span class="info" data-info="Mietdauer in der Quelle nicht angegeben — als 1 Monat (T1) angenommen. Konservative Annahme: ausgeschriebene Preise sind meist Kurzzeitpreise." style="margin-left:3px">*</span>':''}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
     <td>${methodTag(p.method)}</td>
     <td class="small">${p.date}</td>
     <td class="right"><button class="rowbtn" data-edit="${p.id}">✎</button><button class="rowbtn" data-del="${p.id}">✕</button></td>
@@ -1402,6 +1431,7 @@ function renderSettings(){
   document.getElementById('ref_München').value=STATE.settings.refSqm['München'];
   document.getElementById('set_fresh').value=STATE.settings.freshDays;
   document.getElementById('set_due').value=STATE.settings.dueDays;
+  document.getElementById('set_stale').value=STATE.settings.staleDays||90;
   document.getElementById('set_slack').value=STATE.settings.slackWebhook||'';
   const dm=STATE.settings.damp||{lage:0.5,size:0.7};
   document.getElementById('set_dlage').value=dm.lage; document.getElementById('set_dsize').value=dm.size;
@@ -1446,6 +1476,10 @@ function bind(){
     document.getElementById(id).querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
     F[key]=b.dataset[key]; renderDash(); renderMap();});
   grp('cityGrp','city'); grp('tierGrp','tier'); grp('typeGrp','type'); grp('modeGrp','mode');
+  document.getElementById('barModeGrp').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    document.getElementById('barModeGrp').querySelectorAll('button').forEach(x=>{x.classList.remove('active');x.style.background='none';x.style.color='var(--muted)';});
+    b.classList.add('active');b.style.background='var(--navy)';b.style.color='#fff';
+    BARMODE=b.dataset.barmode; renderDash();});
 
 
   document.getElementById('btnSave').onclick=async()=>{
@@ -1471,6 +1505,7 @@ function bind(){
     STATE.settings.refSqm['München']=parseFloat(document.getElementById('ref_München').value)||22;
     STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
     STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
+    STATE.settings.staleDays=parseInt(document.getElementById('set_stale').value)||90;
     STATE.settings.slackWebhook=document.getElementById('set_slack').value.trim();
     STATE.settings.damp={
       lage:Math.min(1,Math.max(0,parseFloat(document.getElementById('set_dlage').value)||0.5)),
