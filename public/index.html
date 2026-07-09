@@ -44,7 +44,7 @@ nav.tabs button{font-family:var(--head);text-transform:uppercase;letter-spacing:
 nav.tabs button.active{color:var(--navy);border-bottom-color:var(--coral)}
 .tabbadge{display:inline-block;background:var(--coral);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:6px;font-family:var(--body)}
 
-.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
 .filters .grp{display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .filters .grp button{background:none;border:none;padding:8px 14px;cursor:pointer;font-family:var(--body);font-weight:600;color:var(--muted);font-size:13px}
 .filters .grp button.active{background:var(--navy);color:#fff}
@@ -55,17 +55,17 @@ select,input,textarea{font-family:var(--body);font-size:13px;border:1px solid va
 .g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:2fr 1fr}
 @media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.g4,.g3,.g2{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .card h3{font-size:14px;color:var(--navy);margin-bottom:12px}
 .eyebrow{font-family:var(--head);font-size:11px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
-.kpi .val{font-family:var(--head);font-size:34px;color:var(--navy);margin-top:4px}
+.kpi .val{font-family:var(--head);font-size:29px;color:var(--navy);margin-top:3px}
 .kpi.hero{background:var(--navy);color:#fff;border:none}
 .kpi.hero .eyebrow{color:var(--mint)} .kpi.hero .val{color:#fff}
 .pill{display:inline-block;font-weight:700;font-size:12px;padding:3px 9px;border-radius:20px}
 .pill.up{background:#fbe3e1;color:#c0443c} .pill.down{background:#e0efe8;color:var(--good)} .pill.flat{background:#eef0f6;color:var(--muted)}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line)}
 th{font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#fff;background:var(--navy);position:sticky;top:0}
 tbody tr:nth-child(even){background:#fafbfe}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
@@ -91,7 +91,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .note{font-size:12px;color:var(--muted)}
 .banner{background:#fff;border:1px solid var(--line);border-left:4px solid var(--coral);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px}
-.chartbox{position:relative;height:300px}
+.chartbox{position:relative;height:260px}
 .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
@@ -105,7 +105,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .srclogo-wrap img{width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:6px}
 .task-ico img{width:22px;height:22px;border-radius:5px}
 .right{text-align:right}
-.mt{margin-top:18px}
+.mt{margin-top:14px}
 .hidden{display:none!important}
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.2);z-index:60;opacity:0;transition:.2s;pointer-events:none}
 .toast.show{opacity:1}
@@ -161,16 +161,14 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 <div class="wrap">
 
   <nav class="tabs">
-    <button data-tab="tasks" class="active">Aufgaben<span class="tabbadge" id="taskCount">0</span></button>
-    <button data-tab="dash">Dashboard</button>
-    <button data-tab="map">Karte</button>
-    <button data-tab="entry">Preise erfassen</button>
-    <button data-tab="control">Steuerung</button>
+    <button data-tab="dash" class="active">Dashboard</button>
+    <button data-tab="tasks">Aufgaben<span class="tabbadge" id="taskCount">0</span></button>
+    <button data-tab="data">Daten & Quellen</button>
     <button data-tab="settings">Einstellungen</button>
   </nav>
 
   <!-- TASKS -->
-  <section id="tab-tasks">
+  <section id="tab-tasks" class="hidden">
     <div class="banner">Alles, was gepflegt werden muss — an einem Ort. Task anklicken, Preise direkt eintragen, fertig. <b>Neue Anbieter</b> zuerst erfassen, dann <b>Aktualisierungen</b>.</div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -182,7 +180,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   </section>
 
   <!-- DASHBOARD -->
-  <section id="tab-dash" class="hidden">
+  <section id="tab-dash">
   <div class="filters">
     <div class="grp" id="cityGrp">
       <button data-city="Berlin" class="active">Berlin</button>
@@ -206,6 +204,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="spacer"></div>
     <span class="note" id="tierHint"></span>
   </div>
+    <details class="card" style="padding:12px 16px;margin-bottom:14px">
+      <summary style="cursor:pointer;font-family:var(--head);text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--navy)">ⓘ So funktioniert der Preisradar</summary>
+      <div class="note" style="margin-top:10px;line-height:1.6">
+        <b>Was:</b> Das Tool vergleicht eure Long-Stay-Monatsraten mit dem Wettbewerb in Berlin und München — automatisch aktualisiert, statt Excel-Handarbeit.<br>
+        <b>Woher die Daten:</b> Ein KI-Scraper (Button im Aufgaben-Tab) prüft alle registrierten Quellen — zuerst die Anbieter-Websites, dann Portale (WG-Gesucht, ImmoScout) und Aggregatoren (Wunderflats, Homelike, HousingAnywhere). Was er nicht findet, wird als Aufgabe manuell gepflegt. Jeder Preispunkt trägt Quelle, Datum und Herkunft (🟢 AUTO / 🟠 MANUELL).<br>
+        <b>Wie verglichen wird:</b> Preise sind nur vergleichbar, wenn Lage und Größe berücksichtigt sind. Deshalb: <b>Fair-Preis = Marktbasis × Lagefaktor × Größenfaktor</b> (beide gedämpft, damit sie nicht überzeichnen — einstellbar). Δ fair zeigt je Angebot, ob es über oder unter seinem Lage-fairen Niveau liegt. Der <b>Einstiegs-Index</b> vergleicht euren günstigsten Preis mit dem günstigsten je Wettbewerber — die Zahl, die der Kunde beim Portalvergleich „fühlt".<br>
+        <b>Datenqualität:</b> Es zählt je Anbieter × Kategorie immer nur der neueste Punkt; identische Scrape-Treffer werden dedupliziert; Ausreißer (&gt;30 % Sprung) landen zur Prüfung im Aufgaben-Tab statt im Dashboard; Bewegungen 5–30 % erzeugen Alerts.
+      </div>
+    </details>
     <div class="grid g4">
       <div class="card kpi hero">
         <div class="eyebrow">Einstiegs-Index<span class="info" data-info="Vergleicht euren günstigsten Preis mit dem günstigsten Preis je Wettbewerber (Median über alle Anbieter), bereinigt um Lage und Größe. 100 = gleich teuer wie der Markt-Einstieg. 108 = euer Einstieg ist 8 % teurer. Das ist die Zahl, die der Kunde beim Vergleichen 'fühlt'.">i</span></div>
@@ -230,14 +237,15 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
     <div id="alertBanner"></div>
     <div class="card mt">
+      <h3>Handlungsempfehlungen<span class="info" data-info="Regelbasiert aus den aktuellen Daten abgeleitet: Kategorien deutlich über/unter Lage-fairem Preis, Einstiegs-Positionierung, offene Preisbewegungen und — falls gepflegt — eure Auslastung. Transparente Regeln, keine Blackbox. Empfehlungen ersetzen keine Pricing-Entscheidung, sie priorisieren, wo hingeschaut werden sollte.">i</span></h3>
+      <div id="recoBox"></div>
+    </div>
+    <div class="card mt">
       <h3>The Base je Kategorie vs. Markt<span class="info" data-info="Drilldown: jede eurer Kategorien gegen ihren Lage-fairen Preis (Marktbasis × Lage × Größe). Zeigt, welches Produkt euer Premium trägt und wo ihr unter Markt liegt.">i</span></h3>
       <table><thead><tr><th>Kategorie</th><th class="right">Preis</th><th class="right">Fair-Preis</th><th class="right">Δ fair</th></tr></thead>
       <tbody id="catTable"></tbody></table>
     </div>
-    <div class="card mt">
-      <h3>Handlungsempfehlungen<span class="info" data-info="Regelbasiert aus den aktuellen Daten abgeleitet: Kategorien deutlich über/unter Lage-fairem Preis, Einstiegs-Positionierung, offene Preisbewegungen und — falls gepflegt — eure Auslastung. Transparente Regeln, keine Blackbox. Empfehlungen ersetzen keine Pricing-Entscheidung, sie priorisieren, wo hingeschaut werden sollte.">i</span></h3>
-      <div id="recoBox"></div>
-    </div>
+
 
     <div class="grid g2 mt">
       <div class="card">
@@ -262,6 +270,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="legend"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber</span><span><span class="sw" style="background:var(--mint)"></span>Fair-Preis-Linie</span></div>
     </div>
 
+    <div class="card mt" style="padding:0;overflow:hidden">
+      <div style="padding:14px 16px 0"><h3>Karte<span class="info" data-info="Alle aktuellen Angebote im Filter. Navy = The Base, Coral = Wettbewerber, Markergröße = Preisniveau. Adressgenau, sobald der Scraper Adressen liefert — sonst Bezirks-Mittelpunkt. Klick auf Marker für Details.">i</span></h3></div>
+      <div id="mapBox" style="height:420px;margin-top:10px"></div>
+    </div>
+
     <div class="card mt">
       <h3>Preisentwicklung (Zeitreihe)<span class="info" data-info="Median je Erfassungsdatum. Zeigt, wie sich The Base und der Markt über die Zeit bewegen — jede Scrape- oder Pflegerunde erzeugt neue Datenpunkte.">i</span></h3>
       <div class="chartbox"><canvas id="lineChart"></canvas></div>
@@ -284,29 +297,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
   </section>
 
-  <!-- MAP -->
-  <section id="tab-map" class="hidden">
-    <div class="filters">
-      <div class="grp" id="mapCityGrp">
-        <button data-mcity="Berlin" class="active">Berlin</button>
-        <button data-mcity="München">München</button>
-      </div>
-      <div class="grp" id="mapTierGrp">
-        <button data-mtier="t1" class="active">T1 · Kurz</button>
-        <button data-mtier="t2">T2 · Mittel</button>
-        <button data-mtier="t3">T3 · Lang</button>
-      </div>
-      <div class="spacer"></div>
-      <span class="note">Adressgenau, sobald der Scraper Adressen liefert — sonst Bezirks-Ebene<span class="info" data-info="Navy = The Base, Coral = Wettbewerber. Klick auf einen Marker zeigt Anbieter, Kategorien, Preisspanne und Δ fair. Position = Bezirks-Mittelpunkt, mehrere Anbieter im selben Bezirk werden leicht versetzt.">i</span></span>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div id="mapBox" style="height:560px"></div>
-    </div>
-    <div class="legend mt"><span><span class="sw" style="background:var(--navy)"></span>The Base</span><span><span class="sw" style="background:var(--coral)"></span>Wettbewerber · Markergröße = Preisniveau</span></div>
-  </section>
-
   <!-- ENTRY -->
-  <section id="tab-entry" class="hidden">
+  <section id="tab-data" class="hidden">
     <div class="banner">Freie Erfassung — für <b>neue Anbieter/Kategorien</b>, die (noch) nicht als Aufgabe angelegt sind. Für die laufende Pflege: Tab <b>Aufgaben</b>.</div>
     <div class="card">
       <h3 id="formTitle">Neuer Preispunkt</h3>
@@ -351,11 +343,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         </table>
       </div>
     </div>
-  </section>
 
-  <!-- CONTROL -->
-  <section id="tab-control" class="hidden">
-    <div class="banner">Was ist frisch, was überfällig? Jede Quelle = Anbieter × Stadt. <b>Rot = jetzt nachtragen</b> (steht auch als Aufgabe im Aufgaben-Tab).</div>
+    <h3 class="mt" style="font-size:16px">Quellen-Status & Aktivitätslog</h3><div class="note" style="margin:6px 0 12px">Jede Quelle = Anbieter × Stadt. Rot = überfällig (steht auch als Aufgabe). Aggregatoren werden nur vom Scraper durchsucht.</div>
     <div class="grid g3">
       <div class="card kpi"><div class="eyebrow">Frisch</div><div class="val" id="cGood" style="color:var(--good)">0</div><div class="small" id="cGoodSub"></div></div>
       <div class="card kpi"><div class="eyebrow">Bald fällig</div><div class="val" id="cDue" style="color:#b6851e">0</div><div class="small" id="cDueSub"></div></div>
@@ -375,7 +364,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="note">Wer hat wann was gemacht — neueste zuerst.</div>
       <div class="mt" id="logList" style="max-height:420px;overflow:auto"></div>
     </div>
-  </section>
+    </section>
+
 
   <!-- SETTINGS -->
   <section id="tab-settings" class="hidden">
@@ -391,6 +381,16 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         <div class="form-grid" style="grid-template-columns:1fr 1fr">
           <div class="field"><label>Frisch bis</label><input id="set_fresh" type="number"></div>
           <div class="field"><label>Fällig ab</label><input id="set_due" type="number"></div>
+        </div>
+        <h3 class="mt">Modell-Kalibrierung<span class="info" data-info="Wie stark Lage und Größe auf den Fair-Preis wirken. 0 = gar nicht, 1 = voll (Faktor 1,3 wirkt als +30 %). Empfehlung: Lage 0,5 (Faktor 1,3 wirkt als +15 %), Größe 0,7. Nach Änderung rechnen alle Fair-Preise sofort neu.">i</span></h3>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Lage-Dämpfung (0–1)</label><input id="set_dlage" type="number" step="0.05" min="0" max="1"></div>
+          <div class="field"><label>Größen-Dämpfung (0–1)</label><input id="set_dsize" type="number" step="0.05" min="0" max="1"></div>
+        </div>
+        <h3 class="mt">Eigene Häuser (Karten-Pin)<span class="info" data-info="Exakte Adresse eurer Häuser — wird beim Speichern automatisch in Koordinaten übersetzt (OpenStreetMap) und pinnt The Base adressgenau auf der Karte.">i</span></h3>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr">
+          <div class="field"><label>Berlin ONE — Adresse</label><input id="bg_Berlin" placeholder="Straße Nr, PLZ Berlin"></div>
+          <div class="field"><label>Munich ONE — Adresse</label><input id="bg_München" placeholder="Straße Nr, PLZ München"></div>
         </div>
         <h3 class="mt">Auslastung (für Empfehlungen)<span class="info" data-info="Eure eigene Auslastung je Stadt als Monats-Zeitreihe: aktueller Monat (Ist) plus 3 Forward-Monate, in Prozent. Fließt in die Handlungsempfehlungen ein und erscheint als Linie in der Preisentwicklung. Ältere Monate bleiben als Historie erhalten. Quelle: Cockpit/PMS, Copy-Paste einmal im Monat.">i</span></h3>
         <div id="occGrid"></div>
@@ -447,7 +447,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.6.2';
+const VERSION='v1.7.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -556,7 +556,7 @@ function buildSeed(){
     registry: [...seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
                ...seedAggregators.map(r=>({company:r[0],city:r[1],url:r[2],segment:'Aggregator',type:'aggregator'}))],
     log:[{ts:new Date().toISOString(),user:'System',action:'Seed geladen',details:pts.length+' Preispunkte, '+seedRegistry.length+' Anbieter'}],
-    settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35},
+    settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35, damp:{lage:0.5,size:0.7}, baseGeo:{}},
     meta:{seededAt:new Date().toISOString(),version:'1.1'}};
 }
 
@@ -568,6 +568,8 @@ function migrate(s){
   if(!s.log){ s.log=[]; changed=true; }
   if(!s.alerts){ s.alerts=[]; }
   if(s.settings && !s.settings.occupancy){ s.settings.occupancy={Berlin:{},'München':{}}; }
+  if(s.settings && !s.settings.damp){ s.settings.damp={lage:0.5,size:0.7}; changed=true; }
+  if(s.settings && !s.settings.baseGeo){ s.settings.baseGeo={}; }
   // Occupancy: altes 2-Felder-Format -> Monats-Zeitreihe
   if(s.settings && s.settings.occupancy){
     const now=new Date(); const ym=d=>d.toISOString().slice(0,7);
@@ -651,9 +653,12 @@ function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.
 /* ============================ HELPERS ============================ */
 const F={city:'Berlin',tier:'t1',type:'all',mode:'raw'};
 const TIERLBL={t1:'T1 · Kurz (Base 1–2 M · Wettb. ~1 M)',t2:'T2 · Mittel (Base 3–4 M · Wettb. ~3 M)',t3:'T3 · Lang (Base 5–6 M · Wettb. ~5–6 M)'};
-function lageOf(p){ return STATE.lageFactors[p.city+'|'+p.location] ?? 1.0; }
+// Dämpfung: rohe Faktoren werden abgeschwächt, damit Lage/Größe nicht überproportional wirken.
+// effektiv = 1 + Dämpfung × (roh − 1). Beispiel Lage 1,3 bei Dämpfung 0,5 → wirkt als 1,15.
+function damp(){ return STATE.settings.damp||{lage:0.5,size:0.7}; }
+function lageOf(p){ const raw=STATE.lageFactors[p.city+'|'+p.location] ?? 1.0; return 1+damp().lage*(raw-1); }
 function refSqm(city){ return STATE.settings.refSqm[city]||21.5; }
-function sizeFactor(p){ return p.sqm? (p.sqm/refSqm(p.city)) : 1.0; }
+function sizeFactor(p){ if(!p.sqm) return 1.0; const raw=p.sqm/refSqm(p.city); return 1+damp().size*(raw-1); }
 function normPrice(p){ const f=sizeFactor(p)*lageOf(p); return f>0? p.price/f : p.price; }
 function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
 function filtered(scope){
@@ -680,12 +685,14 @@ function marketBasis(){
 function entryIndex(){
   const base=latest(filtered('base')), comp=latest(filtered('competitor'));
   if(!base.length||!comp.length) return null;
-  const baseEntry=Math.min(...base.map(normPrice));
+  const baseCheapest=base.slice().sort((a,b)=>normPrice(a)-normPrice(b))[0];
+  const baseEntry=normPrice(baseCheapest);
   const by={};
   comp.forEach(p=>{const v=normPrice(p); if(!(p.company in by)||v<by[p.company]) by[p.company]=v;});
   const marketEntry=median(Object.values(by));
   if(!marketEntry) return null;
-  return {idx:Math.round(baseEntry/marketEntry*100), baseEntry, marketEntry, n:Object.keys(by).length};
+  return {idx:Math.round(baseEntry/marketEntry*100), baseEntry, marketEntry, n:Object.keys(by).length,
+    rawPrice:baseCheapest.price, rawCat:baseCheapest.category};
 }
 function fairPrice(p,basis){ if(basis==null)return null; return basis*sizeFactor(p)*lageOf(p); }
 function deltaFair(p,basis){ const f=fairPrice(p,basis); return f? (p.price/f-1) : null; }
@@ -1031,7 +1038,7 @@ function renderDash(){
   const ei=entryIndex();
   document.getElementById('kIndex').textContent = ei? ei.idx : '–';
   document.getElementById('kIndexSub').innerHTML = !ei? 'zu wenig Daten' :
-    'Euer Einstieg '+eur(ei.baseEntry)+' vs. Markt-Einstieg '+eur(ei.marketEntry)+' ('+ei.n+' Anbieter) · '+
+    'Günstigstes Angebot: '+eur(ei.rawPrice)+' ('+ei.rawCat+') · Vergleich lage-/größenbereinigt über '+ei.n+' Anbieter · '+
     (ei.idx>102? '<b>+'+(ei.idx-100)+' % teurer</b>' : ei.idx<98? '<b>'+(ei.idx-100)+' % günstiger</b>' : '<b>auf Marktniveau</b>');
   renderCatTable(base,basis);
   renderRecos(base,comp,basis,ei);
@@ -1171,7 +1178,7 @@ function renderDetail(list,basis){
 }
 
 /* ============================ MAP ============================ */
-const MF={city:'Berlin',tier:'t1'};
+
 const GEO={
  'Berlin|Pankow':[52.569,13.402],'Berlin|Prenzlauer Berg':[52.539,13.424],'Berlin|Mitte':[52.520,13.405],
  'Berlin|Berlin Mitte':[52.520,13.405],'Berlin|Moabit':[52.530,13.342],'Berlin|Wedding':[52.547,13.355],
@@ -1190,15 +1197,16 @@ function renderMap(){
   if(!MAP){ MAP=L.map('mapBox'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(MAP); }
   if(MAPLAYER){ MAPLAYER.remove(); }
   MAPLAYER=L.layerGroup().addTo(MAP);
-  MAP.setView(CITY_CENTER[MF.city],12);
-  const pts=latest(STATE.points.filter(p=>p.city===MF.city&&p.tier===MF.tier&&p.status!=='review'));
+  MAP.setView(CITY_CENTER[F.city],12);
+  const pts=latest(STATE.points.filter(p=>p.city===F.city&&p.tier===F.tier&&p.status!=='review'));
   // je Anbieter×Standort ein Marker (Kategorien bündeln)
   const groups={};
   pts.forEach(p=>{const k=p.company+'|'+p.location; (groups[k]=groups[k]||[]).push(p);});
   const basis=(function(){const comp=pts.filter(p=>p.scope==='competitor');return perCompanyMedian(comp,normPrice);})();
   Object.entries(groups).forEach(([k,list])=>{
     const p0=list[0];
-    const withGeo=list.find(x=>x.lat&&x.lng);
+    const bg=(STATE.settings.baseGeo||{})[p0.city];
+    const withGeo=list.find(x=>x.lat&&x.lng) || (p0.scope==='base'&&bg&&bg.lat? {lat:bg.lat,lng:bg.lng,address:bg.address} : null);
     let lat,lng;
     if(withGeo){ lat=withGeo.lat; lng=withGeo.lng; }
     else { const geo=GEO[p0.city+'|'+p0.location]||CITY_CENTER[p0.city];
@@ -1292,6 +1300,11 @@ function renderSettings(){
   document.getElementById('set_fresh').value=STATE.settings.freshDays;
   document.getElementById('set_due').value=STATE.settings.dueDays;
   document.getElementById('set_slack').value=STATE.settings.slackWebhook||'';
+  const dm=STATE.settings.damp||{lage:0.5,size:0.7};
+  document.getElementById('set_dlage').value=dm.lage; document.getElementById('set_dsize').value=dm.size;
+  const bgs=STATE.settings.baseGeo||{};
+  document.getElementById('bg_Berlin').value=(bgs.Berlin||{}).address||'';
+  document.getElementById('bg_München').value=(bgs['München']||{}).address||'';
   const oc=STATE.settings.occupancy||{};
   const months=occMonths();
   document.getElementById('occGrid').innerHTML=
@@ -1323,19 +1336,14 @@ function renderCurrent(){ renderTasks(); renderDash(); renderAll(); refreshLists
 function bind(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    ['tasks','dash','map','entry','control','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
-    if(b.dataset.tab==='map') renderMap();
+    ['tasks','dash','data','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));
+    if(b.dataset.tab==='dash') renderMap();
   });
   const grp=(id,key)=>document.getElementById(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{
     document.getElementById(id).querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    F[key]=b.dataset[key]; renderDash();});
+    F[key]=b.dataset[key]; renderDash(); renderMap();});
   grp('cityGrp','city'); grp('tierGrp','tier'); grp('typeGrp','type'); grp('modeGrp','mode');
-  document.getElementById('mapCityGrp').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    document.getElementById('mapCityGrp').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    MF.city=b.dataset.mcity; renderMap();});
-  document.getElementById('mapTierGrp').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    document.getElementById('mapTierGrp').querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-    MF.tier=b.dataset.mtier; renderMap();});
+
 
   document.getElementById('btnSave').onclick=async()=>{
     const p=readForm();
@@ -1361,6 +1369,25 @@ function bind(){
     STATE.settings.freshDays=parseInt(document.getElementById('set_fresh').value)||21;
     STATE.settings.dueDays=parseInt(document.getElementById('set_due').value)||35;
     STATE.settings.slackWebhook=document.getElementById('set_slack').value.trim();
+    STATE.settings.damp={
+      lage:Math.min(1,Math.max(0,parseFloat(document.getElementById('set_dlage').value)||0.5)),
+      size:Math.min(1,Math.max(0,parseFloat(document.getElementById('set_dsize').value)||0.7))};
+    STATE.settings.baseGeo=STATE.settings.baseGeo||{};
+    for(const c of ['Berlin','München']){
+      const addr=document.getElementById('bg_'+c).value.trim();
+      const prev=STATE.settings.baseGeo[c]||{};
+      if(!addr){ STATE.settings.baseGeo[c]={}; continue; }
+      if(addr!==prev.address){
+        STATE.settings.baseGeo[c]={address:addr};
+        try{
+          const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(addr+', '+c)+'&format=json&limit=1');
+          const j=await r.json();
+          if(j&&j[0]){ STATE.settings.baseGeo[c].lat=parseFloat(j[0].lat); STATE.settings.baseGeo[c].lng=parseFloat(j[0].lon);
+            toast(c+': Adresse gefunden und gepinnt'); }
+          else toast(c+': Adresse nicht gefunden — Schreibweise prüfen');
+        }catch(e){ toast(c+': Geocoding nicht erreichbar'); }
+      }
+    }
     STATE.settings.occupancy=STATE.settings.occupancy||{Berlin:{},'München':{}};
     document.querySelectorAll('[data-occ]').forEach(inp=>{
       const [c,m]=inp.dataset.occ.split('|');
@@ -1369,8 +1396,8 @@ function bind(){
       if(v==='') delete STATE.settings.occupancy[c][m];
       else STATE.settings.occupancy[c][m]=parseFloat(v);
     });
-    addLog('Einstellungen geändert','Referenz-qm / Schwellen');
-    await save();renderCurrent();toast('Einstellungen gespeichert');
+    addLog('Einstellungen geändert','Kalibrierung / Referenzen / Auslastung');
+    await save();renderCurrent();renderMap();toast('Einstellungen gespeichert');
   };
   document.getElementById('lageTable').onchange=async e=>{
     const k=e.target.dataset.lage; if(k){STATE.lageFactors[k]=parseFloat(e.target.value)||1;addLog('Lagefaktor geändert',k+' = '+e.target.value);await save();renderDash();toast('Lagefaktor aktualisiert');}
@@ -1400,7 +1427,7 @@ function exportCsv(){
 function download(name,content){const b=new Blob([content],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
 
 /* ============================ INIT ============================ */
-(async function(){ document.getElementById('verTag').textContent=VERSION; document.getElementById('verSettings').textContent=VERSION; bind(); await loadState(); ensureUser(); renderCurrent(); })();
+(async function(){ document.getElementById('verTag').textContent=VERSION; document.getElementById('verSettings').textContent=VERSION; bind(); await loadState(); ensureUser(); renderCurrent(); renderMap(); })();
 </script>
 </body>
 </html>
