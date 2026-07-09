@@ -287,7 +287,7 @@ td .small,td.small{white-space:nowrap}
     </div>
     </div>
     <div class="card mt">
-      <h3>Detailtabelle<span class="info" data-info="Alle aktuellen Preispunkte im Filter. Δ fair = Abweichung vom Lage-fairen Preis. 🟢 AUTO = per Scraping gefunden, 🟠 MANUELL = von Hand erfasst. Quelle-Link führt zum Original.">i</span></h3>
+      <h3>Detailtabelle<span class="info" data-info="Alle aktuellen Preispunkte im Filter. Δ fair = Angebot vs. Lage-fairer Preis: − = günstiger als fair, + = teurer als fair. 🟢 AUTO = per Scraping gefunden, 🟠 MANUELL = von Hand erfasst. Quelle-Link führt zum Original.">i</span></h3>
       <div style="overflow:auto;max-height:460px">
         <table>
           <thead><tr>
@@ -327,6 +327,7 @@ td .small,td.small{white-space:nowrap}
         <div class="field"><label>Tier</label>
           <select id="f_tier"><option value="t1">T1 · Kurz</option><option value="t2">T2 · Mittel</option><option value="t3">T3 · Lang</option></select></div>
         <div class="field"><label>Monatsrate €</label><input id="f_price" type="number" step="1" placeholder="z.B. 1290"></div>
+        <div class="field"><label>Preisbasis</label><select id="f_pbasis"><option value="warm">Warm / all-in</option><option value="kalt">Kaltmiete</option></select></div>
         <div class="field"><label>Max-Preis € (opt.)</label><input id="f_pmax" type="number" step="1" placeholder="bei Range"></div>
         <div class="field"><label>Service Fee € (opt.)</label><input id="f_fee" type="number" step="1" placeholder="einmalig"></div>
         <div class="field"><label>Stand (Datum)</label><input id="f_date" type="date"></div>
@@ -439,7 +440,7 @@ td .small,td.small{white-space:nowrap}
       <h3>Begriffe in 10 Sekunden</h3>
       <table style="max-width:820px"><tbody>
         <tr><td style="width:200px"><b>Einstiegs-Index</b></td><td class="small">Euer günstigster Preis vs. Markt-Einstieg, bereinigt. 100 = Marktniveau, 108 = 8 % teurer.</td></tr>
-        <tr><td><b>Fair-Preis / Δ fair</b></td><td class="small">Was ein Angebot in dieser Lage/Größe kosten „dürfte" — und wie weit es davon abweicht.</td></tr>
+        <tr><td><b>Fair-Preis / Δ fair</b></td><td class="small">Was ein Angebot in dieser Lage/Größe kosten „dürfte". Δ fair: − = günstiger als fair, + = teurer. Alle Preise = Warmmiete/all-in.</td></tr>
         <tr><td><b>Tier T1/T2/T3</b></td><td class="small">Mietdauer-Staffel: ~1 Monat / ~3 Monate / ~6+ Monate.</td></tr>
         <tr><td><b>🟢 AUTO / 🟠 MANUELL</b></td><td class="small">Herkunft des Preispunkts: Scraper oder Handpflege — beides mit Quelle & Datum.</td></tr>
         <tr><td><b>Review</b></td><td class="small">Auto-Preis mit &gt;30 % Sprung — wartet im Aufgaben-Tab auf Freigabe, zählt bis dahin nicht.</td></tr>
@@ -530,7 +531,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.11.0';
+const VERSION='v1.12.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -818,6 +819,7 @@ function valOf(p){ return F.mode==='norm'? normPrice(p) : p.price; }
 function staleDays(){ return STATE.settings.staleDays||90; }
 function filtered(scope){
   return STATE.points.filter(p=> p.city===F.city && p.tier===F.tier && p.status!=='review'
+    && p.priceBasis!=='kalt'
     && (p.scope==='base' || daysSince(p.date)<=staleDays())
     && (scope? p.scope===scope : true)
     && (F.type==='all' || p.roomType===F.type));
@@ -1199,7 +1201,8 @@ function renderDash(){
   {const nA=new Set(comp.map(c=>c.company)).size;
    const fresh=comp.filter(p=>daysSince(p.date)<=STATE.settings.freshDays).length;
    const pct=comp.length?Math.round(fresh/comp.length*100):0;
-   document.getElementById('dataBasis').innerHTML='Datenbasis: <b>'+nA+' Anbieter</b> · '+comp.length+' Angebote · <b>'+pct+' % frisch</b> (≤ '+STATE.settings.freshDays+' T) · Punkte älter als '+staleDays()+' Tage fließen nicht in KPIs ein';}
+   const kalt=STATE.points.filter(p=>p.city===F.city&&p.tier===F.tier&&p.priceBasis==='kalt'&&p.status!=='review').length;
+   document.getElementById('dataBasis').innerHTML='Datenbasis: <b>'+nA+' Anbieter</b> · '+comp.length+' Angebote (Warmmiete/all-in) · <b>'+pct+' % frisch</b> (≤ '+STATE.settings.freshDays+' T)'+(kalt?' · <b>'+kalt+' Kaltmieten-Punkt(e) ausgeblendet</b>':'')+' · älter als '+staleDays()+' T = nicht in KPIs';}
   renderCatTable(base,basis);
   renderRecos(base,comp,basis,ei);
   const st=document.getElementById('statTable');
@@ -1410,7 +1413,7 @@ function renderAll(){
   tb.innerHTML=list.map(p=>`<tr>
     <td><span class="tag ${p.scope==='base'?'base':'comp'}">${p.scope==='base'?'Base':'Wettb.'}</span></td>
     <td>${p.company}</td><td>${p.city}</td><td>${p.location}</td><td>${p.category}</td>
-    <td>${p.tier.toUpperCase()}${p.tierAssumed?'<span class="info" data-info="Mietdauer in der Quelle nicht angegeben — als 1 Monat (T1) angenommen. Konservative Annahme: ausgeschriebene Preise sind meist Kurzzeitpreise." style="margin-left:3px">*</span>':''}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
+    <td>${p.tier.toUpperCase()}${p.tierAssumed?'<span class="info" data-info="Mietdauer in der Quelle nicht angegeben — als 1 Monat (T1) angenommen. Konservative Annahme: ausgeschriebene Preise sind meist Kurzzeitpreise." style="margin-left:3px">*</span>':''}${p.priceBasis==='kalt'?' <span class="tag" style="background:#fdf1dd;color:#a9791f">KALT</span>':''}</td><td class="num">${eur(p.price)}${p.priceMax?'–'+Math.round(p.priceMax):''}</td>
     <td>${methodTag(p.method)}</td>
     <td class="small">${p.date}</td>
     <td class="right"><button class="rowbtn" data-edit="${p.id}">✎</button><button class="rowbtn" data-del="${p.id}">✕</button></td>
@@ -1422,6 +1425,7 @@ function readForm(){
   return {scope:g('f_scope'),company:g('f_company')||(g('f_scope')==='base'?'The Base':''),city:g('f_city'),
     location:g('f_location'),category:g('f_category')||'Range',roomType:g('f_type'),sqm:num('f_sqm'),
     tier:g('f_tier'),price:num('f_price'),priceMax:num('f_pmax'),serviceFee:num('f_fee'),
+    priceBasis:(document.getElementById('f_pbasis')||{value:'warm'}).value==='kalt'?'kalt':'warm',
     date:g('f_date')||TODAY,sourceUrl:g('f_url'),note:g('f_note'),by:USER,method:'manual'};
 }
 function fillForm(p){
