@@ -234,10 +234,10 @@ td .small,td.small{white-space:nowrap}
     <div class="grid g2 mt">
       <div class="card">
         <div style="display:flex;align-items:center;gap:10px">
-          <h3 style="margin:0">Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand. Kompakt = je Wettbewerber ein Balken (Median).">i</span></h3>
+          <h3 style="margin:0">Positionierung im Markt<span class="info" data-info="Alle aktuellen Angebote im Filter, sortiert nach Preis. Navy = The Base, Coral = Wettbewerber. Hover zeigt Standort, Größe und Datenstand. Kompakt = je Wettbewerber ein Balken (Median); Klick auf einen Anbieter mit mehreren Anzeigen (▸) klappt seine Einzelangebote auf.">i</span></h3>
           <div class="grp" id="barModeGrp" style="display:flex;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:auto">
-            <button data-barmode="detail" class="active" style="background:var(--navy);color:#fff;border:none;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Detail</button>
-            <button data-barmode="compact" style="background:none;border:none;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">Kompakt</button>
+            <button data-barmode="detail" style="background:none;border:none;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer">Detail</button>
+            <button data-barmode="compact" class="active" style="background:var(--navy);color:#fff;border:none;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Kompakt</button>
           </div>
         </div>
         <div class="chartbox" id="barBox" style="height:auto"><canvas id="barChart"></canvas></div>
@@ -531,7 +531,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.12.1';
+const VERSION='v1.12.2';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -1284,7 +1284,8 @@ function renderScatter(base,comp,basis){
     y:{title:{display:true,text:'Rohpreis €/Monat'},ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}}}}});
 }
 
-let BARMODE='detail';
+let BARMODE='compact';
+let BAREXPAND=new Set(); // im Kompakt-Modus aufgeklappte Anbieter (nach company)
 // Label-Aufbereitung für die Achse: Klammer-Zusätze aus der Marke und
 // Größenangaben aus der Kategorie entfernen, zu lange Labels kürzen.
 // Der volle Name inkl. Größe steht weiterhin im Tooltip.
@@ -1293,18 +1294,31 @@ const cleanCat=c=>String(c||'').replace(/\s*\(?\s*~?\s*\d+(\s*[–-]\s*\d+)?\s*(
 const truncLbl=(s,m=26)=>s.length>m?s.slice(0,m-1).replace(/[\s·]+$/,'')+'…':s;
 function barLabel(co,cat){const c=cleanCo(co),k=cleanCat(cat);return truncLbl(c&&k?c+' · '+k:(c||k));}
 // Voller (nicht gekürzter) Name für den Tooltip-Titel
-function fullLabel(p){return p.scope==='base'?'★ '+p.category:p.company+(p.category&&p.category!=='Range'?' · '+p.category:'');}
+function fullLabel(p){
+  if(p._agg) return cleanCo(p.company)+' ('+p._agg+') · Median';
+  return p.scope==='base'?'★ '+p.category:p.company+(p.category&&p.category!=='Range'?' · '+p.category:'');
+}
 
 function renderBar(base,comp){
-  const labels=[], vals=[], colors=[], pts=[];
-  const push=(p,label,col)=>{labels.push(label);vals.push(Math.round(valOf(p)));colors.push(col);pts.push(p);};
+  const labels=[], vals=[], colors=[], pts=[], groups=[];
+  // groups[i] = company-Name, wenn der Balken zu einer aufklappbaren Gruppe gehört (Klick togglet), sonst null
+  const push=(p,label,col,grp,val)=>{labels.push(label);vals.push(Math.round(val!=null?val:valOf(p)));colors.push(col);pts.push(p);groups.push(grp||null);};
   base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,'★ '+truncLbl(cleanCat(p.category),24),'#14285f'));
   if(BARMODE==='compact'){
     const by={};
     comp.forEach(p=>{(by[p.company]=by[p.company]||[]).push(p);});
     Object.entries(by).map(([co,list])=>({co,med:median(list.map(valOf)),list}))
       .sort((a,b)=>a.med-b.med)
-      .forEach(g=>push({...g.list[0],_agg:g.list.length},truncLbl(cleanCo(g.co),22)+(g.list.length>1?' ('+g.list.length+')':''),'#f0786e'));
+      .forEach(g=>{
+        if(g.list.length<=1){ push(g.list[0],truncLbl(cleanCo(g.co),22),'#f0786e'); return; }
+        const expanded=BAREXPAND.has(g.co);
+        // Median-Kopfbalken (klickbar zum Auf-/Zuklappen)
+        push({...g.list[0],_agg:g.list.length,company:g.co},(expanded?'▾ ':'▸ ')+truncLbl(cleanCo(g.co),20)+' ('+g.list.length+')','#f0786e',g.co,g.med);
+        if(expanded){
+          g.list.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>
+            push(p,'    '+truncLbl(cleanCat(p.category)||p.company,24),'#f6a99f',g.co));
+        }
+      });
   } else {
     comp.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,barLabel(p.company,p.category!=='Range'?p.category:''),'#f0786e'));
   }
@@ -1313,12 +1327,16 @@ function renderBar(base,comp){
   if(box) box.style.height=Math.max(220, labels.length*24+50)+'px';
   const ctx=document.getElementById('barChart');
   if(barChart)barChart.destroy();
+  const toggle=i=>{const co=groups[i]; if(!co)return; if(BAREXPAND.has(co))BAREXPAND.delete(co);else BAREXPAND.add(co); renderDash();};
   barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
-    options:{maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{
+    options:{maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,els)=>{if(els.length)toggle(els[0].index);},
+      onHover:(e,els)=>{const c=e?.native?.target; if(c)c.style.cursor=(els.length&&groups[els[0].index])?'pointer':'default';},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
       title:items=>{const p=pts[items[0]?.dataIndex]; return p?fullLabel(p):'';},
       label:c=>eur(c.raw),
       afterLabel:c=>{const p=pts[c.dataIndex]; if(!p)return '';
-        if(p._agg) return p._agg+' Kategorien · Median';
+        if(p._agg) return p._agg+' Anzeigen · Median · Klick zum '+(BAREXPAND.has(p.company)?'Zuklappen':'Aufklappen');
         return '📍 '+p.location+(p.sqm?' · '+p.sqm+' qm':'')+'\nStand '+p.date+(p.method==='auto'?' · Auto':' · Manuell');}
     }}},
       scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11},autoSkip:false},grid:{display:false}}}}});
