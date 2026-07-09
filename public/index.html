@@ -531,7 +531,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.12.2';
+const VERSION='v1.12.3';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -1304,6 +1304,7 @@ function renderBar(base,comp){
   // groups[i] = company-Name, wenn der Balken zu einer aufklappbaren Gruppe gehört (Klick togglet), sonst null
   const push=(p,label,col,grp,val)=>{labels.push(label);vals.push(Math.round(val!=null?val:valOf(p)));colors.push(col);pts.push(p);groups.push(grp||null);};
   base.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>push(p,'★ '+truncLbl(cleanCat(p.category),24),'#14285f'));
+  const bands=[]; // [{s,e}] Zeilenbereiche aufgeklappter Gruppen (für das Hintergrund-Band)
   if(BARMODE==='compact'){
     const by={};
     comp.forEach(p=>{(by[p.company]=by[p.company]||[]).push(p);});
@@ -1312,11 +1313,13 @@ function renderBar(base,comp){
       .forEach(g=>{
         if(g.list.length<=1){ push(g.list[0],truncLbl(cleanCo(g.co),22),'#f0786e'); return; }
         const expanded=BAREXPAND.has(g.co);
+        const s=labels.length;
         // Median-Kopfbalken (klickbar zum Auf-/Zuklappen)
         push({...g.list[0],_agg:g.list.length,company:g.co},(expanded?'▾ ':'▸ ')+truncLbl(cleanCo(g.co),20)+' ('+g.list.length+')','#f0786e',g.co,g.med);
         if(expanded){
           g.list.slice().sort((a,b)=>valOf(a)-valOf(b)).forEach(p=>
-            push(p,'    '+truncLbl(cleanCat(p.category)||p.company,24),'#f6a99f',g.co));
+            push(p,'      '+truncLbl(cleanCat(p.category)||p.company,22),'#f6a99f',g.co));
+          bands.push({s,e:labels.length-1});
         }
       });
   } else {
@@ -1328,10 +1331,19 @@ function renderBar(base,comp){
   const ctx=document.getElementById('barChart');
   if(barChart)barChart.destroy();
   const toggle=i=>{const co=groups[i]; if(!co)return; if(BAREXPAND.has(co))BAREXPAND.delete(co);else BAREXPAND.add(co); renderDash();};
+  // CSS-Y-Koordinate → Zeilenindex, damit die ganze Zeile (Name + Balken) klick-/hoverbar ist
+  const rowAt=cssY=>{const a=barChart&&barChart.chartArea; if(!a||cssY<a.top||cssY>a.bottom)return -1; const n=labels.length; const rh=(a.bottom-a.top)/n; return Math.min(n-1,Math.max(0,Math.floor((cssY-a.top)/rh)));};
+  // Hintergrund-Band hinter aufgeklappten Gruppen (grenzt die Gruppe sichtbar ab)
+  const bandPlugin={id:'grpBands',beforeDatasetsDraw(chart){
+    const a=chart.chartArea; if(!a||!bands.length)return; const n=chart.data.labels.length; const rh=(a.bottom-a.top)/n;
+    const cx=chart.ctx; cx.save(); cx.fillStyle='rgba(240,120,110,0.10)';
+    bands.forEach(b=>{const y=a.top+b.s*rh+1, h=(b.e-b.s+1)*rh-2, x=2, w=a.right-2;
+      cx.beginPath(); if(cx.roundRect)cx.roundRect(x,y,w,h,8); else cx.rect(x,y,w,h); cx.fill();});
+    cx.restore();
+  }};
   barChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:5}]},
+    plugins:[bandPlugin],
     options:{maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,els)=>{if(els.length)toggle(els[0].index);},
-      onHover:(e,els)=>{const c=e?.native?.target; if(c)c.style.cursor=(els.length&&groups[els[0].index])?'pointer':'default';},
       plugins:{legend:{display:false},tooltip:{callbacks:{
       title:items=>{const p=pts[items[0]?.dataIndex]; return p?fullLabel(p):'';},
       label:c=>eur(c.raw),
@@ -1340,6 +1352,9 @@ function renderBar(base,comp){
         return '📍 '+p.location+(p.sqm?' · '+p.sqm+' qm':'')+'\nStand '+p.date+(p.method==='auto'?' · Auto':' · Manuell');}
     }}},
       scales:{x:{ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}},y:{ticks:{font:{size:11},autoSkip:false},grid:{display:false}}}}});
+  // Zeilenbasierte Klick-/Hover-Erkennung — ganze Zeile klickbar, nicht nur der Balken
+  ctx.onclick=evt=>{const r=ctx.getBoundingClientRect(); toggle(rowAt(evt.clientY-r.top));};
+  ctx.onmousemove=evt=>{const r=ctx.getBoundingClientRect(); const i=rowAt(evt.clientY-r.top); ctx.style.cursor=(i>=0&&groups[i])?'pointer':'default';};
 }
 
 function renderLine(){
