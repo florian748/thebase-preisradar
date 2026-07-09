@@ -104,6 +104,7 @@ module.exports = async function handler(req, res) {
           sqm: (typeof p.sqm === 'number' && p.sqm > 5 && p.sqm < 200) ? p.sqm : (last && last.sqm) || null,
           tier,
           tierAssumed: p.tierKnown===false ? true : undefined,
+          priceBasis: p.priceBasis==='kalt' ? 'kalt' : 'warm',
           price: p.price,
           priceMax: (typeof p.priceMax === 'number' && p.priceMax > p.price) ? p.priceMax : null,
           serviceFee: null, date: today, method:'auto',
@@ -207,12 +208,13 @@ Vorgehen (in dieser Reihenfolge):
 1. ${url ? 'Rufe ZUERST die offizielle Website ab (web_fetch auf ' + url + ' und naheliegende Preis-/Zimmerseiten wie /preise, /rooms, /apartments).' : 'Suche zuerst die offizielle Website des Anbieters und rufe deren Preisseite ab.'} Preise von der Anbieterseite sind die bevorzugte Quelle (sourceUrl = Anbieterseite).
 2. Nur wenn die Anbieterseite keine konkreten Preise zeigt: Websuche nach aktuellen Inseraten (WG-Gesucht/ImmoScout/Immowelt o.ä.) als Fallback.
 Regeln:
+- PREISDEFINITION (WICHTIG): Immer der monatliche GESAMTPREIS, den der Mieter tatsächlich zahlt — Warmmiete / all-inclusive (inkl. Nebenkosten/Heizung; Strom/Internet sofern enthalten). Stehen Kalt- UND Warmmiete im Inserat: IMMER die Warmmiete nehmen. Ist nur die Kaltmiete auffindbar: diese nehmen und "priceBasis":"kalt" setzen, sonst "priceBasis":"warm".
 - Nur konkrete Euro-Beträge aus Quellen von 2026.
 - Je gefundener Zimmerkategorie EIN Eintrag. Mietdauer-Zuordnung: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate. Suche aktiv nach Staffelpreisen je Dauer. Wenn Dauer in der Quelle NICHT genannt ist: t1 und "tierKnown":false; wenn genannt: "tierKnown":true.
 - roomType: "coliving" (Zimmer in geteilter Wohnung), "studio" (eigene Küche+Bad), "apartment" (größer/getrennte Räume).
 - Wenn nichts Belastbares gefunden wird: leeres Array.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
-[{"category":"Studio M","location":"Bezirk/Stadtteil","address":"Straße Hausnr (falls genannt, sonst null)","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+[{"category":"Studio M","location":"Bezirk/Stadtteil","address":"Straße Hausnr (falls genannt, sonst null)","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceBasis":"warm","priceMax":null,"sourceUrl":"https://..."}]`;
 
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -235,12 +237,13 @@ async function scrapeAggregator(apiKey, aggName, city, url) {
   const prompt =
 `Durchsuche die Plattform "${aggName}" (${url}) nach möblierten Long-Stay-Angeboten (ab 1 Monat) in ${city} von PROFESSIONELLEN Anbietern (Coliving-Betreiber, Serviced-Apartment-Ketten — keine Privatvermieter).
 Regeln:
+- PREISDEFINITION (WICHTIG): Immer der monatliche GESAMTPREIS, den der Mieter tatsächlich zahlt — Warmmiete / all-inclusive (inkl. Nebenkosten/Heizung; Strom/Internet sofern enthalten). Stehen Kalt- UND Warmmiete im Inserat: IMMER die Warmmiete nehmen. Ist nur die Kaltmiete auffindbar: diese nehmen und "priceBasis":"kalt" setzen, sonst "priceBasis":"warm".
 - Je Angebot: den ECHTEN Anbieter-/Betreibernamen als "company" (z. B. "Habyt", "Vonder"), NICHT den Plattformnamen.
 - Nur konkrete Euro-Monatspreise von 2026. Mietdauer: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate; wenn nicht genannt: t1 und "tierKnown":false, sonst "tierKnown":true.
 - Maximal 6 Angebote, bevorzugt bekannte Betreiber mit mehreren Einheiten.
 - Wenn nichts Belastbares: leeres Array.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array:
-[{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+[{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceBasis":"warm","priceMax":null,"sourceUrl":"https://..."}]`;
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(45000) : undefined,
