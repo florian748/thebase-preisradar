@@ -101,7 +101,7 @@ td .small,td.small{white-space:nowrap}
   background:#eef0f6;color:var(--muted);font-size:11px;font-weight:700;cursor:help;position:relative;margin-left:6px;vertical-align:middle;font-family:var(--body);text-transform:none;letter-spacing:0}
 .info::after{content:attr(data-info);position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
   background:var(--ink);color:#fff;font-size:12px;font-weight:400;line-height:1.4;padding:10px 12px;border-radius:8px;
-  width:260px;z-index:40;opacity:0;pointer-events:none;transition:.15s;text-align:left;white-space:normal;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  width:260px;z-index:2000;opacity:0;pointer-events:none;transition:.15s;text-align:left;white-space:normal;box-shadow:0 6px 24px rgba(0,0,0,.25)}
 .info:hover::after{opacity:1}
 .srclogo-wrap img{width:18px;height:18px;border-radius:4px;vertical-align:middle;margin-right:6px}
 .task-ico img{width:22px;height:22px;border-radius:5px}
@@ -193,12 +193,13 @@ td .small,td.small{white-space:nowrap}
       <button data-tier="t2">T2 · Mittel</button>
       <button data-tier="t3">T3 · Lang</button>
     </div>
-    <div class="grp" id="typeGrp">
+    <div class="grp" id="typeGrp" style="position:relative">
       <button data-type="all" class="active">Alle Typen</button>
       <button data-type="coliving">Coliving</button>
       <button data-type="studio">Studio</button>
       <button data-type="apartment">Apartment</button>
     </div>
+    <span class="info" data-info="Coliving = privates Zimmer, Bad/Küche geteilt. Studio = eigenes Apartment mit Küchenzeile + Bad (euer Kernprodukt, auch Serviced Apartments). Apartment = größere Einheit mit getrennten Räumen (1+ Schlafzimmer).">i</span>
     <div class="grp" id="modeGrp">
       <button data-mode="raw" class="active">Rohpreis</button>
       <button data-mode="norm">Lagebereinigt</button>
@@ -442,6 +443,7 @@ td .small,td.small{white-space:nowrap}
         <tr><td><b>Tier T1/T2/T3</b></td><td class="small">Mietdauer-Staffel: ~1 Monat / ~3 Monate / ~6+ Monate.</td></tr>
         <tr><td><b>🟢 AUTO / 🟠 MANUELL</b></td><td class="small">Herkunft des Preispunkts: Scraper oder Handpflege — beides mit Quelle & Datum.</td></tr>
         <tr><td><b>Review</b></td><td class="small">Auto-Preis mit &gt;30 % Sprung — wartet im Aufgaben-Tab auf Freigabe, zählt bis dahin nicht.</td></tr>
+        <tr><td><b>Coliving / Studio / Apartment</b></td><td class="small">Coliving = Zimmer in geteilter Wohnung · Studio = eigenes Apartment mit Küchenzeile & Bad (inkl. Serviced Apartments) · Apartment = größere Einheit mit getrennten Räumen.</td></tr>
         <tr><td><b>Marktbasis</b></td><td class="small">Lagebereinigter Referenzpreis des Wettbewerbs (Median, jeder Anbieter zählt gleich).</td></tr>
       </tbody></table>
     </div>
@@ -528,7 +530,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.9.0';
+const VERSION='v1.10.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -604,6 +606,21 @@ const seedRegistry = [
   ['the Stay.Campus','München','https://findyourcoliving.com/munich','Student'],
   ['Living Hotels','München','https://findyourcoliving.com/munich','Serviced Apartments'],
 ];
+const seedServiced=[
+  ['Stayery','Berlin','https://www.stayery.com/de/berlin'],
+  ['Limehome','Berlin','https://www.limehome.com/de/suche/berlin'],
+  ['Numa','Berlin','https://numastays.com/locations/germany/berlin'],
+  ['SMARTments business','Berlin','https://www.smartments-business.de/standorte/berlin'],
+  ['JOYN','Berlin','https://joyn-apartments.com/de/berlin'],
+  ['Acora Living the City','Berlin','https://www.acora.de/berlin'],
+  ['Limehome','München','https://www.limehome.com/de/suche/muenchen'],
+  ['Numa','München','https://numastays.com/locations/germany/munich'],
+  ['SMARTments business','München','https://www.smartments-business.de/standorte/muenchen'],
+  ['JOYN','München','https://joyn-apartments.com/de/munich'],
+  ['Bob W','München','https://bobw.co'],
+  ['MASEVEN','München','https://www.maseven.de'],
+  ['THE FLAG','München','https://hotel.the-flag.de'],
+];
 const seedAggregators=[
   ['Wunderflats','Berlin','https://wunderflats.com/de/moeblierte-wohnungen/berlin'],
   ['Homelike','Berlin','https://www.thehomelike.com/de/moeblierte-wohnungen/berlin'],
@@ -635,6 +652,7 @@ function buildSeed(){
   pushComp(compBER,'Berlin'); pushComp(compMUC,'München');
   return {points:pts, lageFactors:{...seedLage},
     registry: [...seedRegistry.map(r=>({company:r[0],city:r[1],url:r[2],segment:r[3]})),
+               ...seedServiced.map(r=>({company:r[0],city:r[1],url:r[2],segment:'Serviced Apartments'})),
                ...seedAggregators.map(r=>({company:r[0],city:r[1],url:r[2],segment:'Aggregator',type:'aggregator'}))],
     log:[{ts:new Date().toISOString(),user:'System',action:'Seed geladen',details:pts.length+' Preispunkte, '+seedRegistry.length+' Anbieter'}],
     settings:{refSqm:{Berlin:21.5,'München':22}, freshDays:21, dueDays:35, damp:{lage:0.5,size:0.7}, baseGeo:{Berlin:{address:'Pestalozzistraße 5-8, 13187 Berlin'},'München':{address:'Schätzweg 1-3, 80935 München'}}},
@@ -670,6 +688,23 @@ function migrate(s){
       }
     });
   }
+  // Auslastung Jul–Dez 2026 (Stand 09.07.2026, von Florian geliefert) — nur setzen, wenn Monat noch leer
+  if(s.settings && s.settings.occupancy){
+    const seedOcc={Berlin:{'2026-07':97,'2026-08':76,'2026-09':53,'2026-10':31,'2026-11':22,'2026-12':16},
+                   'München':{'2026-07':85,'2026-08':60,'2026-09':68,'2026-10':56,'2026-11':47,'2026-12':39}};
+    for(const c of ['Berlin','München']){
+      s.settings.occupancy[c]=s.settings.occupancy[c]||{};
+      for(const [m,v] of Object.entries(seedOcc[c])){
+        if(s.settings.occupancy[c][m]==null){ s.settings.occupancy[c][m]=v; changed=true; }
+      }
+    }
+  }
+  // Serviced-Apartment-Player ergänzen, falls noch nicht vorhanden
+  seedServiced.forEach(a=>{
+    if(!s.registry.some(r=>r.company===a[0]&&r.city===a[1])){
+      s.registry.push({company:a[0],city:a[1],url:a[2],segment:'Serviced Apartments'}); changed=true;
+    }
+  });
   // Aggregator-Quellen ergänzen, falls noch nicht vorhanden
   seedAggregators.forEach(a=>{
     if(!s.registry.some(r=>r.company===a[0]&&r.city===a[1])){
@@ -793,7 +828,7 @@ function statusOf(d){ const s=STATE.settings, x=daysSince(d);
 const methodTag=m=> m==='auto' ? '<span class="tag auto">🟢 AUTO</span>' : '<span class="tag manual">🟠 MANUELL</span>';
 function occMonths(){
   const out=[]; const now=new Date();
-  for(let i=0;i<4;i++){ out.push(new Date(now.getFullYear(),now.getMonth()+i,15).toISOString().slice(0,7)); }
+  for(let i=0;i<6;i++){ out.push(new Date(now.getFullYear(),now.getMonth()+i,15).toISOString().slice(0,7)); }
   return out;
 }
 function occFor(city){
@@ -1209,7 +1244,7 @@ function renderScatter(base,comp,basis){
     const p=c.raw._p; if(!p)return null;
     const d=deltaFair(p,basis);
     return p.company+' · '+p.category+' — '+eur(p.price)+(p.sqm?' · '+p.sqm+' qm':'')+(d!=null?' · Δ fair '+(d>0?'+':'')+Math.round(d*100)+' %':'');
-  }}}},scales:{x:{title:{display:true,text:'Lagefaktor'},grid:{color:'#eef0f6'},min:0.75,max:1.6},
+  }}}},scales:{x:{title:{display:true,text:'Lagefaktor (effektiv, gedämpft — roh × Kalibrierung)'},grid:{color:'#eef0f6'},min:0.75,max:1.6},
     y:{title:{display:true,text:'Rohpreis €/Monat'},ticks:{callback:v=>'€'+v},grid:{color:'#eef0f6'}}}}});
 }
 
