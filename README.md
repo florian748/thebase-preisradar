@@ -1,4 +1,4 @@
-# TheBase Preisradar v1.11
+# TheBase Preisradar v1.12
 
 Long-Stay-Preisradar Berlin/München. Vercel + Upstash KV (geteilter Team-State).
 
@@ -12,7 +12,7 @@ Long-Stay-Preisradar Berlin/München. Vercel + Upstash KV (geteilter Team-State)
 - KV_REST_API_URL / KV_REST_API_TOKEN  — via Upstash-Integration (Connect Project)
 - ANTHROPIC_API_KEY                     — für das Scraping (console.anthropic.com)
 
-## v1.11 Features
+## v1.12 Features
 - Marktindex (100 = fair zum Markt, Lage & Größe bereinigt) + Fair-Preis/Δ-fair je Angebot
 - Chart "Preis vs. Lage" mit Fair-Preis-Linie
 - Datenqualität: latest-only KPIs, Dedupe beim Scrape, Ausreißer-Review-Tasks (>30 %)
