@@ -166,6 +166,7 @@ async function geocode(address, city) {
 async function scrapeOne(apiKey, company, city, url) {
   const prompt =
 `Recherchiere die AKTUELLEN öffentlich einsehbaren Monatsmieten (möblierte Apartments/Zimmer, Long-Stay ab 1 Monat) des Anbieters "${company}" in ${city}, Deutschland.${url ? ' Offizielle Website: ' + url : ''}
+Hinweis für Serviced-Apartment-Anbieter (Stayery, Limehome, Numa, JOYN, SMARTments u. ä.): Diese zeigen oft dynamische Tagespreise — gesucht ist die LONGSTAY-/Monatsrate (Aufenthalt ab 28–30 Nächten, oft mit Langzeitrabatt). Rechne notfalls: beworbene Longstay-Tagesrate × 30.
 Vorgehen (in dieser Reihenfolge):
 1. ${url ? 'Rufe ZUERST die offizielle Website ab (web_fetch auf ' + url + ' und naheliegende Preis-/Zimmerseiten wie /preise, /rooms, /apartments).' : 'Suche zuerst die offizielle Website des Anbieters und rufe deren Preisseite ab.'} Preise von der Anbieterseite sind die bevorzugte Quelle (sourceUrl = Anbieterseite).
 2. Nur wenn die Anbieterseite keine konkreten Preise zeigt: Websuche nach aktuellen Inseraten (WG-Gesucht/ImmoScout/Immowelt o.ä.) als Fallback.
