@@ -530,7 +530,7 @@ td .small,td.small{white-space:nowrap}
 
 <script>
 /* ============================ CONST / SEED ============================ */
-const VERSION='v1.10.0';
+const VERSION='v1.11.0';
 const TODAY = new Date().toISOString().slice(0,10);
 const LEGACY = '2026-05-01';
 
@@ -698,6 +698,39 @@ function migrate(s){
         if(s.settings.occupancy[c][m]==null){ s.settings.occupancy[c][m]=v; changed=true; }
       }
     }
+  }
+  // Bereinigung v1.11 (einmalig): Eigenmarke, Dubletten, roomType
+  if(!s.meta) s.meta={};
+  if(!s.meta.cleanup111){
+    s.meta.cleanup111=true; changed=true;
+    const norm=x=>String(x||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]/g,'');
+    // 1) Eigene Marke als "Wettbewerber" entfernen (z. B. via Aggregator entdeckt)
+    const ownPts=s.points.filter(p=>p.scope==='competitor'&&/the\s*base/i.test(p.company));
+    if(ownPts.length){
+      s.points=s.points.filter(p=>!(p.scope==='competitor'&&/the\s*base/i.test(p.company)));
+      s.log.unshift({ts:new Date().toISOString(),user:'System',action:'Bereinigung',details:ownPts.length+' eigene Angebote aus Wettbewerbsdaten entfernt (The Base via Aggregator)'});
+    }
+    s.registry=s.registry.filter(r=>!(r.type!=='aggregator'&&/the\s*base/i.test(r.company)));
+    // 2) Dubletten auf kanonische Namen mergen (normalisierter Namensvergleich, nur Nicht-Aggregatoren)
+    const canon={}; // normName|city -> kanonischer company-Name (erster Registry-Eintrag gewinnt)
+    const keep=[];
+    s.registry.forEach(r=>{
+      if(r.type==='aggregator'){keep.push(r);return;}
+      const k=norm(r.company)+'|'+r.city;
+      if(canon[k]){ // Dublette: Punkte umbenennen, Eintrag verwerfen
+        s.points.forEach(p=>{if(p.company===r.company&&p.city===r.city)p.company=canon[k];});
+        s.log.unshift({ts:new Date().toISOString(),user:'System',action:'Bereinigung',details:'Dublette gemergt: '+r.company+' → '+canon[k]+' ('+r.city+')'});
+        changed=true;
+      } else { canon[k]=r.company; keep.push(r); }
+    });
+    s.registry=keep;
+    // 3) roomType anhand Kategorie-Keywords heilen
+    let fixed=0;
+    s.points.forEach(p=>{
+      const c=String(p.category||'').toLowerCase();
+      if(/\bwg\b|privatzimmer|private room|zimmer in|shared|mitbewohner/.test(c) && p.roomType!=='coliving'){p.roomType='coliving';fixed++;}
+    });
+    if(fixed) s.log.unshift({ts:new Date().toISOString(),user:'System',action:'Bereinigung',details:fixed+' Punkte: Typ auf Coliving korrigiert (WG/Privatzimmer)'});
   }
   // Serviced-Apartment-Player ergänzen, falls noch nicht vorhanden
   seedServiced.forEach(a=>{
