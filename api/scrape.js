@@ -80,6 +80,7 @@ module.exports = async function handler(req, res) {
           roomType: ['coliving','studio','apartment'].includes(p.roomType) ? p.roomType : (last && last.roomType) || 'studio',
           sqm: (typeof p.sqm === 'number' && p.sqm > 5 && p.sqm < 200) ? p.sqm : (last && last.sqm) || null,
           tier,
+          tierAssumed: p.tierKnown===false ? true : undefined,
           price: p.price,
           priceMax: (typeof p.priceMax === 'number' && p.priceMax > p.price) ? p.priceMax : null,
           serviceFee: null, date: today, method:'auto',
@@ -170,11 +171,11 @@ Vorgehen (in dieser Reihenfolge):
 2. Nur wenn die Anbieterseite keine konkreten Preise zeigt: Websuche nach aktuellen Inseraten (WG-Gesucht/ImmoScout/Immowelt o.ä.) als Fallback.
 Regeln:
 - Nur konkrete Euro-Beträge aus Quellen von 2026.
-- Je gefundener Zimmerkategorie EIN Eintrag. Mietdauer-Zuordnung: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate. Wenn Dauer unklar: t1.
+- Je gefundener Zimmerkategorie EIN Eintrag. Mietdauer-Zuordnung: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate. Suche aktiv nach Staffelpreisen je Dauer. Wenn Dauer in der Quelle NICHT genannt ist: t1 und "tierKnown":false; wenn genannt: "tierKnown":true.
 - roomType: "coliving" (Zimmer in geteilter Wohnung), "studio" (eigene Küche+Bad), "apartment" (größer/getrennte Räume).
 - Wenn nichts Belastbares gefunden wird: leeres Array.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
-[{"category":"Studio M","location":"Bezirk/Stadtteil","address":"Straße Hausnr (falls genannt, sonst null)","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+[{"category":"Studio M","location":"Bezirk/Stadtteil","address":"Straße Hausnr (falls genannt, sonst null)","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
 
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -198,11 +199,11 @@ async function scrapeAggregator(apiKey, aggName, city, url) {
 `Durchsuche die Plattform "${aggName}" (${url}) nach möblierten Long-Stay-Angeboten (ab 1 Monat) in ${city} von PROFESSIONELLEN Anbietern (Coliving-Betreiber, Serviced-Apartment-Ketten — keine Privatvermieter).
 Regeln:
 - Je Angebot: den ECHTEN Anbieter-/Betreibernamen als "company" (z. B. "Habyt", "Vonder"), NICHT den Plattformnamen.
-- Nur konkrete Euro-Monatspreise von 2026. Mietdauer: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate; unklar = t1.
+- Nur konkrete Euro-Monatspreise von 2026. Mietdauer: t1 = ~1 Monat, t2 = ~3 Monate, t3 = ~6+ Monate; wenn nicht genannt: t1 und "tierKnown":false, sonst "tierKnown":true.
 - Maximal 6 Angebote, bevorzugt bekannte Betreiber mit mehreren Einheiten.
 - Wenn nichts Belastbares: leeres Array.
 Antworte AUSSCHLIESSLICH mit einem JSON-Array:
-[{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
+[{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","tierKnown":true,"price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(45000) : undefined,
