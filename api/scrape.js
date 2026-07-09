@@ -55,7 +55,7 @@ module.exports = async function handler(req, res) {
       const points = isAgg
         ? await scrapeAggregator(apiKey, company, city, reg.url)
         : await scrapeOne(apiKey, company, city, reg.url);
-      let geoBudget = 3;
+      let geoBudget = 2;
       for (const p of points) {
         const realCompany = isAgg ? (p.company || '').trim() : company;
         if (isAgg && !realCompany) continue;
@@ -113,8 +113,9 @@ module.exports = async function handler(req, res) {
       reg.lastScrape = { at:new Date().toISOString(), found:points.length };
       results.push({ source:key, found:points.length });
     } catch (e) {
-      reg.lastScrape = { at:new Date().toISOString(), found:0, error:String(e && e.message || e).slice(0,140) };
-      results.push({ source:key, found:0, error:String(e && e.message || e).slice(0,140) });
+      const msg = /abort|timeout/i.test(String(e && e.message || e)) ? 'Timeout (45s) — Quelle übersprungen' : String(e && e.message || e).slice(0,140);
+      reg.lastScrape = { at:new Date().toISOString(), found:0, error:msg };
+      results.push({ source:key, found:0, error:msg });
     }
     state.scrapeRun.checked++;
   }
@@ -177,6 +178,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array, ohne Markdown, ohne Erklärtext:
 
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
+    signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(45000) : undefined,
     headers: { 'content-type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
@@ -203,6 +205,7 @@ Antworte AUSSCHLIESSLICH mit einem JSON-Array:
 [{"company":"Habyt","category":"Studio","location":"Bezirk","address":"Straße Hausnr oder null","roomType":"studio","sqm":22,"tier":"t1","price":1234,"priceMax":null,"sourceUrl":"https://..."}]`;
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
+    signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(45000) : undefined,
     headers: { 'content-type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6', max_tokens: 2000,
